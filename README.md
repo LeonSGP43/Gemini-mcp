@@ -64,7 +64,7 @@ Config location:
 ```json
 {
   "mcpServers": {
-    "gemini": {
+    "gemini-assistant": {
       "command": "npx",
       "args": ["-y", "github:LKbaba/Gemini-mcp"],
       "env": {
@@ -79,7 +79,7 @@ Config location:
 ```json
 {
   "mcpServers": {
-    "gemini": {
+    "gemini-assistant": {
       "command": "npx",
       "args": ["-y", "github:LKbaba/Gemini-mcp"],
       "env": {
@@ -98,7 +98,7 @@ Config location:
 Add to your MCP settings:
 ```json
 {
-  "gemini": {
+  "gemini-assistant": {
     "command": "npx",
     "args": ["-y", "github:LKbaba/Gemini-mcp"],
     "env": {
