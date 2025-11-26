@@ -1,36 +1,36 @@
 /**
- * Gemini 模型配置
- * 基于官方文档: https://ai.google.dev/gemini-api/docs/models
- * 最后更新: 2025年11月
+ * Gemini model configuration
+ * Based on official documentation: https://ai.google.dev/gemini-api/docs/models
+ * Last updated: November 2025
  */
 
 /**
- * 模型能力详情接口
+ * Model capabilities details interface
  */
 export interface ModelCapabilities {
-  /** 最大输入 token 数 */
+  /** Maximum input tokens */
   maxInputTokens: number;
-  /** 最大输出 token 数 */
+  /** Maximum output tokens */
   maxOutputTokens: number;
-  /** 是否支持图像/视频输入 */
+  /** Whether vision/video input is supported */
   supportsVision: boolean;
-  /** 是否支持函数调用 */
+  /** Whether function calling is supported */
   supportsFunctionCalling: boolean;
-  /** 是否支持流式输出 */
+  /** Whether streaming output is supported */
   supportsStreaming: boolean;
-  /** 是否支持思维链 */
+  /** Whether thinking/reasoning is supported */
   supportsThinking: boolean;
-  /** 是否支持系统指令 */
+  /** Whether system instructions are supported */
   supportsSystemInstructions: boolean;
 }
 
 /**
- * 模型定价信息（可选）
+ * Model pricing information (optional)
  */
 export interface ModelPricing {
-  /** 输入每百万 token 价格 */
+  /** Price per million input tokens */
   inputPerMillion: string;
-  /** 输出每百万 token 价格 */
+  /** Price per million output tokens */
   outputPerMillion: string;
 }
 
@@ -40,22 +40,22 @@ export interface ModelConfig {
   description: string;
   contextWindow: number;
   outputLimit: number;
-  /** 【新增】结构化能力信息 */
+  /** Structured capability information */
   capabilities: ModelCapabilities;
   features: string[];
   bestFor: string[];
-  /** 推荐使用场景（中文） */
+  /** Recommended use cases */
   useCases: string[];
   thinking: boolean;
   lastUpdate: string;
   isDefault: boolean;
-  /** 【新增】定价信息（可选） */
+  /** Pricing information (optional) */
   pricing?: ModelPricing;
 }
 
 /**
- * 支持的 Gemini 模型列表
- * 精选4个模型，专注于UI生成和前端开发
+ * Supported Gemini model list
+ * Curated 4 models focused on UI generation and frontend development
  */
 export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
   'gemini-3-pro-preview': {
@@ -75,7 +75,7 @@ export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
     },
     features: ['thinking', 'multimodal', 'function_calling', 'grounding', 'system_instructions'],
     bestFor: ['UI generation', 'Frontend development', 'Design to code', 'Interactive animations', 'Complex reasoning'],
-    useCases: ['UI 生成', '前端开发', '设计稿转代码', '交互动画', '复杂推理'],
+    useCases: ['UI generation', 'Frontend development', 'Design to code', 'Interactive animations', 'Complex reasoning'],
     thinking: true,
     lastUpdate: 'November 2025',
     isDefault: true
@@ -97,7 +97,7 @@ export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
     },
     features: ['thinking', 'multimodal', 'function_calling', 'grounding', 'system_instructions'],
     bestFor: ['General coding', 'Large codebase analysis', 'Fallback option'],
-    useCases: ['通用编码', '大型代码库分析', '代码审查', '文档生成'],
+    useCases: ['General coding', 'Large codebase analysis', 'Code review', 'Documentation generation'],
     thinking: true,
     lastUpdate: 'June 2025',
     isDefault: false
@@ -119,7 +119,7 @@ export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
     },
     features: ['thinking', 'multimodal', 'function_calling', 'grounding', 'system_instructions'],
     bestFor: ['High-frequency tasks', 'Batch processing', 'Cost optimization'],
-    useCases: ['快速问答', '实时分析', '批量处理', '成本优化'],
+    useCases: ['Quick Q&A', 'Real-time analysis', 'Batch processing', 'Cost optimization'],
     thinking: true,
     lastUpdate: 'June 2025',
     isDefault: false
@@ -141,7 +141,7 @@ export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
     },
     features: ['thinking', 'multimodal', 'function_calling', 'system_instructions'],
     bestFor: ['Simple queries', 'Quick prototypes', 'Maximum cost savings'],
-    useCases: ['简单查询', '快速验证', '低延迟场景', '最大成本节省'],
+    useCases: ['Simple queries', 'Quick validation', 'Low latency scenarios', 'Maximum cost savings'],
     thinking: true,
     lastUpdate: 'July 2025',
     isDefault: false
@@ -149,16 +149,16 @@ export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
 };
 
 /**
- * 获取默认模型
+ * Get default model
  */
 export function getDefaultModel(): ModelConfig {
   return SUPPORTED_MODELS['gemini-3-pro-preview'];
 }
 
 /**
- * 获取模型配置
- * @param modelId - 模型ID
- * @returns 模型配置，如果不存在则返回默认模型
+ * Get model configuration
+ * @param modelId - Model ID
+ * @returns Model configuration, returns default model if not found
  */
 export function getModelConfig(modelId?: string): ModelConfig {
   if (!modelId) {
@@ -169,23 +169,23 @@ export function getModelConfig(modelId?: string): ModelConfig {
 }
 
 /**
- * 验证模型是否支持
- * @param modelId - 模型ID
- * @returns 是否支持该模型
+ * Validate if model is supported
+ * @param modelId - Model ID
+ * @returns Whether the model is supported
  */
 export function isModelSupported(modelId: string): boolean {
   return modelId in SUPPORTED_MODELS;
 }
 
 /**
- * 获取所有支持的模型列表
+ * Get all supported models list
  */
 export function getAllModels(): ModelConfig[] {
   return Object.values(SUPPORTED_MODELS);
 }
 
 /**
- * 模型选择建议
+ * Model selection recommendations
  */
 export const MODEL_RECOMMENDATIONS = {
   ui_generation: 'gemini-3-pro-preview',

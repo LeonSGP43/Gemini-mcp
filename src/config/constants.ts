@@ -1,11 +1,11 @@
 /**
- * 全局常量定义
+ * Global constant definitions
  */
 
-// MCP 协议版本
+// MCP protocol version
 export const MCP_VERSION = '2024-11-05';
 
-// 服务器信息
+// Server information
 export const SERVER_INFO = {
   name: 'mcp-server-gemini',
   version: '1.0.1',
@@ -14,15 +14,15 @@ export const SERVER_INFO = {
   basedOn: 'aliargun/mcp-server-gemini v4.2.2'
 };
 
-// API 配置
+// API configuration
 export const API_CONFIG = {
-  timeout: 60000, // 60秒
+  timeout: 60000, // 60 seconds
   maxRetries: 3,
-  retryDelay: 1000, // 1秒
+  retryDelay: 1000, // 1 second
   maxImageSize: 10 * 1024 * 1024, // 10MB
 };
 
-// 工具列表
+// Tool names
 export const TOOL_NAMES = {
   GENERATE_UI: 'gemini_generate_ui',
   MULTIMODAL_QUERY: 'gemini_multimodal_query',
@@ -34,7 +34,7 @@ export const TOOL_NAMES = {
   LIST_MODELS: 'list_models'
 } as const;
 
-// 错误代码
+// Error codes
 export const ERROR_CODES = {
   INVALID_REQUEST: -32600,
   METHOD_NOT_FOUND: -32601,
@@ -47,7 +47,7 @@ export const ERROR_CODES = {
   MODEL_NOT_SUPPORTED: -32003
 } as const;
 
-// 默认参数
+// Default parameters
 export const DEFAULT_PARAMS = {
   temperature: 0.7,
   maxTokens: 8192,
@@ -55,32 +55,32 @@ export const DEFAULT_PARAMS = {
   topK: 40
 };
 
-// 支持的框架
+// Supported frameworks
 export const FRAMEWORKS = ['vanilla', 'react', 'vue', 'svelte'] as const;
 
-// 支持的技术（动画）
+// Supported technologies (animation)
 export const ANIMATION_TECHNOLOGIES = ['css', 'canvas', 'webgl', 'threejs'] as const;
 
-// 支持的样式
+// Supported styles
 export const UI_STYLES = ['modern', 'minimal', 'glassmorphism', 'neumorphism'] as const;
 
-// 输出格式
+// Output formats
 export const OUTPUT_FORMATS = ['text', 'code', 'json', 'markdown'] as const;
 
-// 内容类型
+// Content types
 export const CONTENT_TYPES = ['code', 'document', 'data', 'auto'] as const;
 
-// 分析任务类型
+// Analysis task types
 export const ANALYSIS_TASKS = ['summarize', 'review', 'explain', 'optimize', 'debug'] as const;
 
-// 代码库分析关注点
+// Codebase analysis focus areas
 export const CODEBASE_FOCUS = ['architecture', 'security', 'performance', 'dependencies', 'patterns'] as const;
 
-// 头脑风暴风格
+// Brainstorm styles
 export const BRAINSTORM_STYLES = ['innovative', 'practical', 'radical'] as const;
 
-// 可行性等级
+// Feasibility levels
 export const FEASIBILITY_LEVELS = ['low', 'medium', 'high'] as const;
 
-// 严重性等级
+// Severity levels
 export const SEVERITY_LEVELS = ['high', 'medium', 'low'] as const;

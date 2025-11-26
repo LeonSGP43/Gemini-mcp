@@ -1,12 +1,12 @@
 /**
- * MCP 工具定义
- * 符合 MCP 协议的工具 Schema
+ * MCP tool definitions
+ * Tool schemas compliant with MCP protocol
  */
 
 import { TOOL_NAMES } from '../config/constants.js';
 
 /**
- * 所有工具的定义
+ * Definitions of all tools
  */
 export const TOOL_DEFINITIONS = [
   // 🎨 Tool 1: gemini_generate_ui
@@ -30,7 +30,7 @@ export const TOOL_DEFINITIONS = [
           description: 'Target framework (default: vanilla)',
           default: 'vanilla'
         },
-        // 【新增】技术栈上下文
+        // [NEW] Tech stack context
         techContext: {
           type: 'object',
           properties: {
@@ -56,7 +56,7 @@ export const TOOL_DEFINITIONS = [
           },
           description: 'Technology stack context for generating code that matches your project'
         },
-        // 【新增】配置文件路径
+        // [NEW] Configuration file path
         configPath: {
           type: 'string',
           description: 'Path to package.json for auto-detecting tech stack. The tool will analyze dependencies to determine CSS framework, UI library, TypeScript usage, etc.'
@@ -123,18 +123,18 @@ export const TOOL_DEFINITIONS = [
           type: 'string',
           description: 'Screenshot of the UI problem as file path (e.g., ./screenshots/bug.png) or Base64 data URI. File paths will be automatically converted to Base64.'
         },
-        // 【新增】源代码文件路径
+        // [NEW] Source code file path
         sourceCodePath: {
           type: 'string',
           description: 'Path to the main source code file causing the issue (e.g., "./src/components/LoginForm.tsx"). The tool will read and analyze this file.'
         },
-        // 【新增】相关文件路径列表
+        // [NEW] List of related file paths
         relatedFiles: {
           type: 'array',
           items: { type: 'string' },
           description: 'Paths to related files like CSS, parent components, or utilities (e.g., ["./src/styles/login.css", "./src/components/Button.tsx"])'
         },
-        // 【保留】直接传入代码内容（向后兼容）
+        // [KEPT] Direct code content input (backward compatibility)
         currentCode: {
           type: 'string',
           description: 'Optional: Current code causing the issue (for backward compatibility, prefer using sourceCodePath)'
@@ -199,12 +199,12 @@ export const TOOL_DEFINITIONS = [
     inputSchema: {
       type: 'object',
       properties: {
-        // 方式1：直接传入内容（保留，向后兼容）
+        // Method 1: Direct content input (kept for backward compatibility)
         content: {
           type: 'string',
           description: 'Content to analyze (direct input). Use this or filePath.'
         },
-        // 方式2：传入文件路径（新增）
+        // Method 2: File path input (new)
         filePath: {
           type: 'string',
           description: 'File path to read and analyze (e.g., "./src/utils/parser.ts"). The tool will automatically read the file and detect the language. Use this or content.'
@@ -237,7 +237,7 @@ export const TOOL_DEFINITIONS = [
           default: 'markdown'
         }
       },
-      required: []  // 改为空数组，因为 content 和 filePath 二选一
+      required: []  // Changed to empty array, as either content or filePath is required
     }
   },
 
@@ -248,7 +248,7 @@ export const TOOL_DEFINITIONS = [
     inputSchema: {
       type: 'object',
       properties: {
-        // 方式1：目录路径（新增）
+        // Method 1: Directory path (new)
         directory: {
           type: 'string',
           description: 'Directory path to analyze (e.g., "./src" or "C:/Project/src"). The tool will automatically read files from this directory.'
@@ -263,13 +263,13 @@ export const TOOL_DEFINITIONS = [
           items: { type: 'string' },
           description: 'Glob patterns to exclude files (e.g., ["node_modules/**", "**/*.test.ts"]). Only used with directory parameter.'
         },
-        // 方式2：文件路径列表（新增）
+        // Method 2: List of file paths (new)
         filePaths: {
           type: 'array',
           items: { type: 'string' },
           description: 'List of file paths to analyze (e.g., ["./src/index.ts", "./src/utils/helper.ts"]). The tool will automatically read these files.'
         },
-        // 方式3：文件内容数组（保留，向后兼容）
+        // Method 3: Array of file contents (kept for backward compatibility)
         files: {
           type: 'array',
           items: {
@@ -299,7 +299,7 @@ export const TOOL_DEFINITIONS = [
           default: 'markdown'
         }
       },
-      required: []  // 改为空数组，因为三种输入方式任选其一
+      required: []  // Changed to empty array, as any one of the three input methods is required
     }
   },
 
@@ -318,12 +318,12 @@ export const TOOL_DEFINITIONS = [
           type: 'string',
           description: 'Optional: Additional context'
         },
-        // 【新增】项目上下文文件路径
+        // [NEW] Project context file path
         contextFilePath: {
           type: 'string',
           description: 'Path to project context file (e.g., README.md, PRD.md). Ideas will be tailored to fit the project.'
         },
-        // 【新增】多个上下文文件
+        // [NEW] Multiple context files
         contextFiles: {
           type: 'array',
           items: { type: 'string' },

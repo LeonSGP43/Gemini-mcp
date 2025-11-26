@@ -1,5 +1,5 @@
 /**
- * 参数验证工具
+ * Parameter validation utilities
  */
 
 import {
@@ -15,7 +15,7 @@ import {
 import { isModelSupported } from '../config/models.js';
 
 /**
- * 验证必填参数
+ * Validate required parameter
  */
 export function validateRequired(value: any, fieldName: string): void {
   if (value === undefined || value === null || value === '') {
@@ -24,7 +24,7 @@ export function validateRequired(value: any, fieldName: string): void {
 }
 
 /**
- * 验证字符串
+ * Validate string
  */
 export function validateString(value: any, fieldName: string, minLength = 1): void {
   if (typeof value !== 'string') {
@@ -36,7 +36,7 @@ export function validateString(value: any, fieldName: string, minLength = 1): vo
 }
 
 /**
- * 验证数字
+ * Validate number
  */
 export function validateNumber(value: any, fieldName: string, min?: number, max?: number): void {
   if (typeof value !== 'number' || isNaN(value)) {
@@ -51,7 +51,7 @@ export function validateNumber(value: any, fieldName: string, min?: number, max?
 }
 
 /**
- * 验证布尔值
+ * Validate boolean
  */
 export function validateBoolean(value: any, fieldName: string): void {
   if (typeof value !== 'boolean') {
@@ -60,7 +60,7 @@ export function validateBoolean(value: any, fieldName: string): void {
 }
 
 /**
- * 验证枚举值
+ * Validate enum value
  */
 export function validateEnum<T extends readonly string[]>(
   value: any,
@@ -75,7 +75,7 @@ export function validateEnum<T extends readonly string[]>(
 }
 
 /**
- * 验证数组
+ * Validate array
  */
 export function validateArray(value: any, fieldName: string, minLength = 1): void {
   if (!Array.isArray(value)) {
@@ -87,7 +87,7 @@ export function validateArray(value: any, fieldName: string, minLength = 1): voi
 }
 
 /**
- * 验证 Base64 图片
+ * Validate Base64 image
  */
 export function validateBase64Image(value: string, fieldName: string): void {
   if (!value.startsWith('data:image/')) {
@@ -96,7 +96,7 @@ export function validateBase64Image(value: string, fieldName: string): void {
 }
 
 /**
- * 验证 URL
+ * Validate URL
  */
 export function validateURL(value: string, fieldName: string): void {
   try {
@@ -107,63 +107,63 @@ export function validateURL(value: string, fieldName: string): void {
 }
 
 /**
- * 验证框架
+ * Validate framework
  */
 export function validateFramework(value: string): void {
   validateEnum(value, 'framework', FRAMEWORKS);
 }
 
 /**
- * 验证动画技术
+ * Validate animation technology
  */
 export function validateAnimationTechnology(value: string): void {
   validateEnum(value, 'technology', ANIMATION_TECHNOLOGIES);
 }
 
 /**
- * 验证 UI 样式
+ * Validate UI style
  */
 export function validateUIStyle(value: string): void {
   validateEnum(value, 'style', UI_STYLES);
 }
 
 /**
- * 验证输出格式
+ * Validate output format
  */
 export function validateOutputFormat(value: string): void {
   validateEnum(value, 'outputFormat', OUTPUT_FORMATS);
 }
 
 /**
- * 验证内容类型
+ * Validate content type
  */
 export function validateContentType(value: string): void {
   validateEnum(value, 'type', CONTENT_TYPES);
 }
 
 /**
- * 验证分析任务
+ * Validate analysis task
  */
 export function validateAnalysisTask(value: string): void {
   validateEnum(value, 'task', ANALYSIS_TASKS);
 }
 
 /**
- * 验证代码库关注点
+ * Validate codebase focus
  */
 export function validateCodebaseFocus(value: string): void {
   validateEnum(value, 'focus', CODEBASE_FOCUS);
 }
 
 /**
- * 验证头脑风暴风格
+ * Validate brainstorm style
  */
 export function validateBrainstormStyle(value: string): void {
   validateEnum(value, 'style', BRAINSTORM_STYLES);
 }
 
 /**
- * 验证模型 ID
+ * Validate model ID
  */
 export function validateModel(modelId: string): void {
   if (!isModelSupported(modelId)) {
@@ -174,14 +174,14 @@ export function validateModel(modelId: string): void {
 }
 
 /**
- * 验证温度参数
+ * Validate temperature parameter
  */
 export function validateTemperature(temperature: number): void {
   validateNumber(temperature, 'temperature', 0, 2);
 }
 
 /**
- * 验证 maxTokens 参数
+ * Validate maxTokens parameter
  */
 export function validateMaxTokens(maxTokens: number): void {
   validateNumber(maxTokens, 'maxTokens', 1, 65536);

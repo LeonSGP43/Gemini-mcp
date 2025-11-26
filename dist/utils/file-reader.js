@@ -1,41 +1,41 @@
 /**
- * 文件读取工具模块
- * 提供单文件读取和目录批量读取功能，支持 glob 模式过滤
+ * File reading utility module
+ * Provides single file reading and directory batch reading functions, supports glob pattern filtering
  */
 import fg from 'fast-glob';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { validatePath, validateFileSize, validateFileCount, SecurityError, DEFAULT_SECURITY_CONFIG } from './security.js';
-// ============== 常量定义 ==============
+// ============== Constant Definitions ==============
 /**
- * 默认排除模式
- * 这些目录/文件通常不需要分析
+ * Default exclude patterns
+ * These directories/files usually don't need to be analyzed
  */
 export const DEFAULT_EXCLUDE_PATTERNS = [
-    // 依赖目录
+    // Dependency directories
     'node_modules/**',
     'vendor/**',
     'bower_components/**',
-    // 构建输出
+    // Build output
     'dist/**',
     'build/**',
     'out/**',
     '.next/**',
     '.nuxt/**',
     '.output/**',
-    // 测试覆盖率
+    // Test coverage
     'coverage/**',
     '.nyc_output/**',
-    // 缓存目录
+    // Cache directories
     '.cache/**',
     '.parcel-cache/**',
     '.turbo/**',
-    // 锁文件
+    // Lock files
     '*.lock',
     'package-lock.json',
     'yarn.lock',
     'pnpm-lock.yaml',
-    // 压缩/编译后文件
+    // Minified/compiled files
     '*.min.js',
     '*.min.css',
     '*.bundle.js',
@@ -44,50 +44,50 @@ export const DEFAULT_EXCLUDE_PATTERNS = [
     '*.map',
     '*.js.map',
     '*.css.map',
-    // 版本控制
+    // Version control
     '.git/**',
     '.svn/**',
     '.hg/**',
-    // IDE 配置
+    // IDE configuration
     '.idea/**',
     '.vscode/**',
     '*.code-workspace',
-    // 日志文件
+    // Log files
     '*.log',
     'logs/**',
-    // 临时文件
+    // Temporary files
     'tmp/**',
     'temp/**',
     '.tmp/**',
 ];
 /**
- * 二进制文件扩展名
- * 这些文件无法作为文本读取，应该跳过
+ * Binary file extensions
+ * These files cannot be read as text and should be skipped
  */
 export const BINARY_EXTENSIONS = [
-    // 图片
+    // Images
     '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.bmp', '.svg', '.tiff', '.avif',
-    // 音频
+    // Audio
     '.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.wma',
-    // 视频
+    // Video
     '.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.webm', '.m4v',
-    // 压缩包
+    // Archives
     '.zip', '.tar', '.gz', '.rar', '.7z', '.bz2', '.xz',
-    // 可执行文件
+    // Executables
     '.exe', '.dll', '.so', '.dylib', '.bin', '.app', '.msi',
-    // 文档（二进制格式）
+    // Documents (binary formats)
     '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.odt', '.ods', '.odp',
-    // 字体
+    // Fonts
     '.woff', '.woff2', '.ttf', '.eot', '.otf',
-    // 数据库
+    // Databases
     '.db', '.sqlite', '.sqlite3', '.mdb',
-    // 其他二进制
+    // Other binary
     '.class', '.jar', '.pyc', '.pyo', '.o', '.obj', '.a', '.lib',
     '.ico', '.icns', '.cur',
 ];
 /**
- * 编程语言映射表
- * 根据文件扩展名检测编程语言
+ * Programming language mapping table
+ * Detects programming language based on file extension
  */
 const LANGUAGE_MAP = {
     // JavaScript/TypeScript
@@ -117,7 +117,7 @@ const LANGUAGE_MAP = {
     '.kts': 'Kotlin Script',
     '.scala': 'Scala',
     '.groovy': 'Groovy',
-    // C 家族
+    // C family
     '.c': 'C',
     '.h': 'C Header',
     '.cpp': 'C++',
@@ -144,7 +144,7 @@ const LANGUAGE_MAP = {
     '.ps1': 'PowerShell',
     '.bat': 'Batch',
     '.cmd': 'Batch',
-    // 配置文件
+    // Configuration files
     '.json': 'JSON',
     '.yaml': 'YAML',
     '.yml': 'YAML',
@@ -153,19 +153,19 @@ const LANGUAGE_MAP = {
     '.ini': 'INI',
     '.cfg': 'Config',
     '.conf': 'Config',
-    // 数据格式
+    // Data formats
     '.csv': 'CSV',
     '.tsv': 'TSV',
-    // 文档
+    // Documents
     '.md': 'Markdown',
     '.mdx': 'MDX',
     '.rst': 'reStructuredText',
     '.txt': 'Plain Text',
-    // 数据库
+    // Database
     '.sql': 'SQL',
     '.graphql': 'GraphQL',
     '.gql': 'GraphQL',
-    // 其他
+    // Other
     '.r': 'R',
     '.R': 'R',
     '.lua': 'Lua',
@@ -186,7 +186,7 @@ const LANGUAGE_MAP = {
     '.hs': 'Haskell',
     // Docker/Container
     '.dockerfile': 'Dockerfile',
-    // 模板
+    // Templates
     '.ejs': 'EJS',
     '.hbs': 'Handlebars',
     '.pug': 'Pug',
@@ -196,18 +196,18 @@ const LANGUAGE_MAP = {
     '.jinja': 'Jinja',
     '.jinja2': 'Jinja2',
 };
-// ============== 错误类定义 ==============
+// ============== Error Class Definition ==============
 /**
- * 文件读取错误类
+ * File reading error class
  */
 export class FileReadError extends Error {
     filePath;
     cause;
     /**
-     * 创建文件读取错误实例
-     * @param message 错误消息
-     * @param filePath 文件路径
-     * @param cause 原始错误（可选）
+     * Create file reading error instance
+     * @param message Error message
+     * @param filePath File path
+     * @param cause Original error (optional)
      */
     constructor(message, filePath, cause) {
         super(message);
@@ -217,12 +217,12 @@ export class FileReadError extends Error {
         Object.setPrototypeOf(this, FileReadError.prototype);
     }
 }
-// ============== 工具函数 ==============
+// ============== Utility Functions ==============
 /**
- * 根据文件扩展名检测编程语言
+ * Detect programming language based on file extension
  *
- * @param filePath 文件路径
- * @returns 语言名称，未知则返回 undefined
+ * @param filePath File path
+ * @returns Language name, returns undefined if unknown
  *
  * @example
  * detectLanguage('src/index.ts')     // 'TypeScript'
@@ -231,7 +231,7 @@ export class FileReadError extends Error {
  */
 export function detectLanguage(filePath) {
     const ext = path.extname(filePath).toLowerCase();
-    // 特殊文件名处理
+    // Special filename handling
     const fileName = path.basename(filePath).toLowerCase();
     if (fileName === 'dockerfile') {
         return 'Dockerfile';
@@ -248,10 +248,10 @@ export function detectLanguage(filePath) {
     return LANGUAGE_MAP[ext];
 }
 /**
- * 检测是否为二进制文件
+ * Detect if file is binary
  *
- * @param filePath 文件路径
- * @returns 如果是二进制文件返回 true
+ * @param filePath File path
+ * @returns Returns true if it's a binary file
  *
  * @example
  * isBinaryFile('image.png')  // true
@@ -261,39 +261,39 @@ export function isBinaryFile(filePath) {
     const ext = path.extname(filePath).toLowerCase();
     return BINARY_EXTENSIONS.includes(ext);
 }
-// ============== 主要函数 ==============
+// ============== Main Functions ==============
 /**
- * 读取单个文件
+ * Read a single file
  *
- * @param filePath 文件路径
- * @param config 安全配置（可选）
- * @returns 文件内容对象
- * @throws FileReadError 当文件读取失败时抛出
- * @throws SecurityError 当安全验证失败时抛出
+ * @param filePath File path
+ * @param config Security configuration (optional)
+ * @returns File content object
+ * @throws FileReadError Thrown when file reading fails
+ * @throws SecurityError Thrown when security validation fails
  *
  * @example
  * const file = await readFile('./src/index.ts');
- * console.log(file.content);  // 文件内容
+ * console.log(file.content);  // File content
  * console.log(file.language); // 'TypeScript'
  */
 export async function readFile(filePath, config) {
-    // 1. 安全验证
+    // 1. Security validation
     await validatePath(filePath, config);
-    // 2. 检查是否为二进制文件
+    // 2. Check if it's a binary file
     if (isBinaryFile(filePath)) {
-        throw new FileReadError(`无法读取二进制文件: "${filePath}"`, filePath);
+        throw new FileReadError(`Cannot read binary file: "${filePath}"`, filePath);
     }
     try {
-        // 3. 获取绝对路径
+        // 3. Get absolute path
         const absolutePath = path.resolve(filePath);
-        // 4. 获取文件信息
+        // 4. Get file information
         const stats = await fs.stat(absolutePath);
-        // 5. 验证文件大小
+        // 5. Validate file size
         const maxSize = config?.maxFileSize ?? DEFAULT_SECURITY_CONFIG.maxFileSize;
         await validateFileSize(absolutePath, maxSize);
-        // 6. 读取文件内容
+        // 6. Read file content
         const content = await fs.readFile(absolutePath, 'utf-8');
-        // 7. 检测语言
+        // 7. Detect language
         const language = detectLanguage(filePath);
         return {
             path: filePath,
@@ -304,31 +304,31 @@ export async function readFile(filePath, config) {
         };
     }
     catch (error) {
-        // 如果是已知的错误类型，直接抛出
+        // If it's a known error type, throw directly
         if (error instanceof FileReadError || error instanceof SecurityError) {
             throw error;
         }
-        // 处理其他错误
+        // Handle other errors
         const nodeError = error;
         if (nodeError.code === 'ENOENT') {
-            throw new FileReadError(`文件不存在: "${filePath}"`, filePath, nodeError);
+            throw new FileReadError(`File not found: "${filePath}"`, filePath, nodeError);
         }
         if (nodeError.code === 'EACCES') {
-            throw new FileReadError(`无权访问文件: "${filePath}"`, filePath, nodeError);
+            throw new FileReadError(`No permission to access file: "${filePath}"`, filePath, nodeError);
         }
         if (nodeError.code === 'EISDIR') {
-            throw new FileReadError(`路径是目录而非文件: "${filePath}"`, filePath, nodeError);
+            throw new FileReadError(`Path is a directory, not a file: "${filePath}"`, filePath, nodeError);
         }
-        throw new FileReadError(`读取文件失败: "${filePath}" - ${error.message}`, filePath, error);
+        throw new FileReadError(`Failed to read file: "${filePath}" - ${error.message}`, filePath, error);
     }
 }
 /**
- * 批量读取多个文件
- * 自动跳过二进制文件和读取失败的文件
+ * Read multiple files in batch
+ * Automatically skips binary files and files that fail to read
  *
- * @param filePaths 文件路径数组
- * @param config 安全配置（可选）
- * @returns 成功读取的文件内容数组
+ * @param filePaths Array of file paths
+ * @param config Security configuration (optional)
+ * @returns Array of successfully read file contents
  *
  * @example
  * const files = await readFiles(['./src/a.ts', './src/b.ts']);
@@ -336,10 +336,10 @@ export async function readFile(filePath, config) {
 export async function readFiles(filePaths, config) {
     const results = [];
     const errors = [];
-    // 并行读取所有文件
+    // Read all files in parallel
     const promises = filePaths.map(async (filePath) => {
         try {
-            // 跳过二进制文件
+            // Skip binary files
             if (isBinaryFile(filePath)) {
                 return null;
             }
@@ -347,7 +347,7 @@ export async function readFiles(filePaths, config) {
             return content;
         }
         catch (error) {
-            // 记录错误但不中断
+            // Record error but don't interrupt
             errors.push({
                 path: filePath,
                 error: error.message
@@ -356,92 +356,92 @@ export async function readFiles(filePaths, config) {
         }
     });
     const settled = await Promise.all(promises);
-    // 过滤掉 null 结果
+    // Filter out null results
     for (const result of settled) {
         if (result !== null) {
             results.push(result);
         }
     }
-    // 如果有错误，输出警告（但不抛出）
+    // If there are errors, output warning (but don't throw)
     if (errors.length > 0) {
-        console.warn(`[file-reader] 跳过 ${errors.length} 个文件:`);
+        console.warn(`[file-reader] Skipped ${errors.length} files:`);
         for (const { path, error } of errors.slice(0, 5)) {
             console.warn(`  - ${path}: ${error}`);
         }
         if (errors.length > 5) {
-            console.warn(`  ... 以及其他 ${errors.length - 5} 个文件`);
+            console.warn(`  ... and ${errors.length - 5} other files`);
         }
     }
     return results;
 }
 /**
- * 读取整个目录
- * 支持 glob 模式过滤，自动排除二进制文件和常见忽略目录
+ * Read entire directory
+ * Supports glob pattern filtering, automatically excludes binary files and common ignored directories
  *
- * @param directory 目录路径
- * @param options 读取选项
- * @returns 文件内容数组
- * @throws SecurityError 当安全验证失败时抛出
- * @throws FileReadError 当目录不存在时抛出
+ * @param directory Directory path
+ * @param options Reading options
+ * @returns Array of file contents
+ * @throws SecurityError Thrown when security validation fails
+ * @throws FileReadError Thrown when directory doesn't exist
  *
  * @example
- * // 读取所有 TypeScript 文件
+ * // Read all TypeScript files
  * const files = await readDirectory('./src', {
  *   include: ['**\/*.ts', '**\/*.tsx'],
  *   exclude: ['**\/*.test.ts']
  * });
  */
 export async function readDirectory(directory, options) {
-    // 1. 安全验证目录路径
+    // 1. Security validate directory path
     await validatePath(directory, options?.securityConfig);
-    // 2. 验证目录是否存在
+    // 2. Validate directory existence
     const absoluteDir = path.resolve(directory);
     try {
         const stats = await fs.stat(absoluteDir);
         if (!stats.isDirectory()) {
-            throw new FileReadError(`路径不是目录: "${directory}"`, directory);
+            throw new FileReadError(`Path is not a directory: "${directory}"`, directory);
         }
     }
     catch (error) {
         if (error.code === 'ENOENT') {
-            throw new FileReadError(`目录不存在: "${directory}"`, directory);
+            throw new FileReadError(`Directory not found: "${directory}"`, directory);
         }
         throw error;
     }
-    // 3. 准备 glob 模式
+    // 3. Prepare glob patterns
     const include = options?.include || ['**/*'];
     const userExclude = options?.exclude || [];
-    // 合并排除模式
+    // Merge exclude patterns
     const exclude = [...DEFAULT_EXCLUDE_PATTERNS, ...userExclude];
-    // 添加二进制文件扩展名到排除模式
+    // Add binary file extensions to exclude patterns
     const binaryExclude = BINARY_EXTENSIONS.map(ext => `**/*${ext}`);
-    // 4. 使用 fast-glob 获取文件列表
+    // 4. Use fast-glob to get file list
     const files = await fg(include, {
         cwd: absoluteDir,
         ignore: [...exclude, ...binaryExclude],
         onlyFiles: true,
-        dot: false, // 不包含隐藏文件（以 . 开头）
-        followSymbolicLinks: false, // 不跟踪符号链接
-        absolute: false // 返回相对路径
+        dot: false, // Don't include hidden files (starting with .)
+        followSymbolicLinks: false, // Don't follow symbolic links
+        absolute: false // Return relative paths
     });
-    // 5. 验证文件数量
+    // 5. Validate file count
     const maxFiles = options?.maxFiles ?? DEFAULT_SECURITY_CONFIG.maxFiles;
     validateFileCount(files.length, maxFiles);
-    // 6. 构建完整文件路径
+    // 6. Build complete file paths
     const filePaths = files.map(file => path.join(directory, file));
-    // 7. 读取所有文件
+    // 7. Read all files
     const contents = await readFiles(filePaths, options?.securityConfig);
-    // 8. 调整相对路径（相对于传入的 directory 参数）
+    // 8. Adjust relative paths (relative to the passed directory parameter)
     return contents.map(file => ({
         ...file,
         path: path.relative(directory, file.absolutePath).replace(/\\/g, '/')
     }));
 }
 /**
- * 检查文件是否存在
+ * Check if file exists
  *
- * @param filePath 文件路径
- * @returns 如果文件存在返回 true
+ * @param filePath File path
+ * @returns Returns true if file exists
  */
 export async function fileExists(filePath) {
     try {
@@ -453,10 +453,10 @@ export async function fileExists(filePath) {
     }
 }
 /**
- * 检查目录是否存在
+ * Check if directory exists
  *
- * @param dirPath 目录路径
- * @returns 如果目录存在返回 true
+ * @param dirPath Directory path
+ * @returns Returns true if directory exists
  */
 export async function directoryExists(dirPath) {
     try {

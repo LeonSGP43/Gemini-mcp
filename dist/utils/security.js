@@ -1,17 +1,17 @@
 /**
- * 安全验证模块
- * 提供文件路径安全验证，防止路径遍历攻击和敏感文件访问
+ * Security validation module
+ * Provides file path security validation to prevent path traversal attacks and sensitive file access
  */
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import micromatch from 'micromatch';
-// ============== 常量定义 ==============
+// ============== Constant Definitions ==============
 /**
- * 默认敏感文件模式
- * 这些文件可能包含敏感信息，默认不允许访问
+ * Default sensitive file patterns
+ * These files may contain sensitive information and are not allowed access by default
  */
 export const DEFAULT_SENSITIVE_PATTERNS = [
-    // 环境变量文件
+    // Environment variable files
     '.env',
     '.env.*',
     '.env.local',
@@ -19,7 +19,7 @@ export const DEFAULT_SENSITIVE_PATTERNS = [
     '.env.production',
     '**/.env',
     '**/.env.*',
-    // SSH 和密钥文件
+    // SSH and key files
     '.ssh/**',
     '**/.ssh/**',
     '*.pem',
@@ -32,24 +32,24 @@ export const DEFAULT_SENSITIVE_PATTERNS = [
     '**/id_ed25519.*',
     '**/id_dsa',
     '**/id_dsa.*',
-    // 凭证和密钥文件
+    // Credential and secret files
     '**/credentials*',
     '**/secrets*',
     '**/secret.*',
     '**/*password*',
     '**/*token*',
-    // Git 敏感配置
+    // Git sensitive configuration
     '**/.git/config',
     '**/.gitconfig',
-    // 数据库文件
+    // Database files
     '*.sqlite',
     '*.sqlite3',
     '*.db',
-    // 历史记录文件
+    // History files
     '**/.bash_history',
     '**/.zsh_history',
     '**/.node_repl_history',
-    // AWS 和云服务配置
+    // AWS and cloud service configurations
     '**/.aws/**',
     '**/.azure/**',
     '**/.gcloud/**',
@@ -58,89 +58,89 @@ export const DEFAULT_SENSITIVE_PATTERNS = [
     '**/docker-compose*.yaml',
 ];
 /**
- * 默认安全配置
+ * Default security configuration
  */
 export const DEFAULT_SECURITY_CONFIG = {
-    allowedDirectories: [], // 空数组表示不限制
+    allowedDirectories: [], // Empty array means no restriction
     sensitivePatterns: DEFAULT_SENSITIVE_PATTERNS,
     maxFileSize: 1024 * 1024, // 1MB
     maxFiles: 500,
     allowSymlinks: false,
 };
-// ============== 错误类定义 ==============
+// ============== Error Class Definitions ==============
 /**
- * 安全错误类
- * 当安全验证失败时抛出此错误
+ * Security error class
+ * Thrown when security validation fails
  */
 export class SecurityError extends Error {
     code;
     path;
     /**
-     * 创建安全错误实例
-     * @param message 错误消息
-     * @param code 错误代码
-     * @param path 相关的文件路径（可选）
+     * Create a security error instance
+     * @param message Error message
+     * @param code Error code
+     * @param path Related file path (optional)
      */
     constructor(message, code, path) {
         super(message);
         this.code = code;
         this.path = path;
         this.name = 'SecurityError';
-        // 确保原型链正确（TypeScript 编译后的兼容性）
+        // Ensure correct prototype chain (TypeScript compilation compatibility)
         Object.setPrototypeOf(this, SecurityError.prototype);
     }
 }
-// ============== 工具函数 ==============
+// ============== Utility Functions ==============
 /**
- * 规范化路径
- * 将路径转换为统一的格式，处理 Windows 和 Unix 路径差异
+ * Normalize path
+ * Convert path to unified format, handling Windows and Unix path differences
  *
- * @param inputPath 输入路径
- * @returns 规范化后的绝对路径
+ * @param inputPath Input path
+ * @returns Normalized absolute path
  *
  * @example
- * normalizePath('./src/index.ts')  // 返回绝对路径
- * normalizePath('C:\\Users\\test') // 返回 C:/Users/test
+ * normalizePath('./src/index.ts')  // Returns absolute path
+ * normalizePath('C:\\Users\\test') // Returns C:/Users/test
  */
 export function normalizePath(inputPath) {
-    // 解析为绝对路径
+    // Resolve to absolute path
     const absolutePath = path.resolve(inputPath);
-    // 统一使用正斜杠（方便跨平台处理）
+    // Unify to use forward slashes (for cross-platform handling)
     return absolutePath.replace(/\\/g, '/');
 }
 /**
- * 检测路径是否包含路径遍历攻击
+ * Detect if path contains path traversal attack
  *
- * 使用 path.relative 方法来安全地检测路径遍历，
- * 避免简单的 includes('..') 检查误杀合法文件名（如 vendor..lib.js）
+ * Use path.relative method to safely detect path traversal,
+ * avoiding false positives from simple includes('..') checks on legitimate filenames (e.g., vendor..lib.js)
  *
- * @param inputPath 要检测的路径
- * @param basePath 基准路径（默认为当前工作目录）
- * @returns 如果包含路径遍历则返回 true
+ * @param inputPath Path to detect
+ * @param basePath Base path (defaults to current working directory)
+ * @returns Returns true if path traversal is detected
  *
  * @example
  * hasPathTraversal('../etc/passwd')      // true
  * hasPathTraversal('./src/index.ts')     // false
- * hasPathTraversal('./vendor..lib.js')   // false（合法文件名）
+ * hasPathTraversal('./vendor..lib.js')   // false (legitimate filename)
  */
 export function hasPathTraversal(inputPath, basePath) {
-    // 获取基准路径（默认为当前工作目录）
+    // Get base path (defaults to current working directory)
     const base = basePath ? path.resolve(basePath) : process.cwd();
-    // 解析输入路径为绝对路径
+    // Resolve input path to absolute path
     const resolvedPath = path.resolve(base, inputPath);
-    // 使用 path.relative 计算相对路径
-    // 如果结果以 '..' 开头，说明路径试图跳出基准目录
+    // Use path.relative to calculate relative path
+    // If result starts with '..', the path is trying to escape the base directory
     const relativePath = path.relative(base, resolvedPath);
-    // 检查相对路径是否以 '..' 开头（表示路径遍历）
-    // 或者是绝对路径（在 Windows 上可能是 'C:' 开头）
+    // Check if relative path starts with '..' (indicates path traversal)
+    // or is an absolute path (on Windows may start with 'C:')
     if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
         return true;
     }
-    // 额外检查：路径段中不应该有单独的 '..' 作为目录名
-    // 这是为了防止一些边缘情况
+    // Additional check: path segments should not have '..' as a standalone directory name
+    // This is to prevent some edge cases
     const segments = inputPath.split(/[/\\]/);
     for (const segment of segments) {
-        // 只检查完全等于 '..' 的段，而不是包含 '..' 的文件名
+        // Only check segments that exactly equal '..', not filenames containing '..'
         if (segment === '..') {
             return true;
         }
@@ -148,11 +148,11 @@ export function hasPathTraversal(inputPath, basePath) {
     return false;
 }
 /**
- * 检查文件是否为敏感文件
+ * Check if file is a sensitive file
  *
- * @param filePath 文件路径
- * @param patterns 敏感文件模式列表（glob 模式）
- * @returns 如果是敏感文件返回 true
+ * @param filePath File path
+ * @param patterns List of sensitive file patterns (glob patterns)
+ * @returns Returns true if it is a sensitive file
  *
  * @example
  * isSensitiveFile('.env')                    // true
@@ -160,16 +160,16 @@ export function hasPathTraversal(inputPath, basePath) {
  * isSensitiveFile('./config/credentials.json') // true
  */
 export function isSensitiveFile(filePath, patterns = DEFAULT_SENSITIVE_PATTERNS) {
-    // 获取文件名和路径
+    // Get filename and path
     const normalizedPath = filePath.replace(/\\/g, '/');
     const fileName = path.basename(normalizedPath);
-    // 使用 micromatch 进行 glob 模式匹配
+    // Use micromatch for glob pattern matching
     const isMatch = micromatch.isMatch(normalizedPath, patterns, {
-        dot: true, // 匹配以 . 开头的文件
-        nocase: true, // 忽略大小写
-        basename: false // 使用完整路径匹配
+        dot: true, // Match files starting with .
+        nocase: true, // Ignore case
+        basename: false // Use full path matching
     });
-    // 额外检查文件名
+    // Additional filename check
     const fileNameMatch = micromatch.isMatch(fileName, patterns, {
         dot: true,
         nocase: true
@@ -177,46 +177,46 @@ export function isSensitiveFile(filePath, patterns = DEFAULT_SENSITIVE_PATTERNS)
     return isMatch || fileNameMatch;
 }
 /**
- * 检查路径是否在允许的目录内
+ * Check if path is within allowed directory
  *
- * 使用 path.relative 方法来安全地检查路径是否在允许的目录内，
- * 避免简单的前缀匹配被绕过（如 /var/www-secret 匹配 /var/www）
+ * Use path.relative method to safely check if path is within allowed directory,
+ * avoiding simple prefix matching bypasses (e.g., /var/www-secret matching /var/www)
  *
- * @param filePath 要检查的文件路径
- * @param allowedDirs 允许的目录列表
- * @returns 如果在允许的目录内返回 true
+ * @param filePath File path to check
+ * @param allowedDirs List of allowed directories
+ * @returns Returns true if within allowed directory
  *
  * @example
  * isWithinAllowedDirectory('./src/index.ts', ['./src', './lib']) // true
  * isWithinAllowedDirectory('./etc/passwd', ['./src'])            // false
- * isWithinAllowedDirectory('/var/www-secret', ['/var/www'])      // false（修复：不会被绕过）
+ * isWithinAllowedDirectory('/var/www-secret', ['/var/www'])      // false (fixed: cannot be bypassed)
  */
 export function isWithinAllowedDirectory(filePath, allowedDirs) {
-    // 如果白名单为空，允许所有路径
+    // If whitelist is empty, allow all paths
     if (!allowedDirs || allowedDirs.length === 0) {
         return true;
     }
-    // 解析为绝对路径
+    // Resolve to absolute path
     const absoluteFilePath = path.resolve(filePath);
     for (const dir of allowedDirs) {
         const absoluteDir = path.resolve(dir);
-        // 使用 path.relative 计算相对路径
+        // Use path.relative to calculate relative path
         const relativePath = path.relative(absoluteDir, absoluteFilePath);
-        // 如果相对路径不以 '..' 开头且不是绝对路径，
-        // 说明文件在允许的目录内或就是允许的目录本身
+        // If relative path doesn't start with '..' and is not an absolute path,
+        // the file is within the allowed directory or is the directory itself
         if (!relativePath.startsWith('..') && !path.isAbsolute(relativePath)) {
-            // 额外检查：空字符串表示路径完全相同
-            // 非空字符串表示是子路径
+            // Additional check: empty string means paths are identical
+            // Non-empty string means it's a subpath
             return true;
         }
     }
     return false;
 }
 /**
- * 检查是否为符号链接
+ * Check if it is a symbolic link
  *
- * @param filePath 文件路径
- * @returns 如果是符号链接返回 true
+ * @param filePath File path
+ * @returns Returns true if it is a symbolic link
  */
 export async function isSymlink(filePath) {
     try {
@@ -224,75 +224,75 @@ export async function isSymlink(filePath) {
         return stats.isSymbolicLink();
     }
     catch {
-        // 文件不存在或无法访问，返回 false
+        // File does not exist or cannot be accessed, return false
         return false;
     }
 }
 /**
- * 获取文件大小
+ * Get file size
  *
- * @param filePath 文件路径
- * @returns 文件大小（字节）
+ * @param filePath File path
+ * @returns File size (bytes)
  */
 export async function getFileSize(filePath) {
     const stats = await fs.stat(filePath);
     return stats.size;
 }
-// ============== 主要验证函数 ==============
+// ============== Main Validation Functions ==============
 /**
- * 验证单个路径的安全性
- * 执行完整的安全检查，包括路径遍历、敏感文件、白名单和符号链接检测
+ * Validate the security of a single path
+ * Performs complete security checks including path traversal, sensitive files, whitelist, and symbolic link detection
  *
- * @param inputPath 要验证的路径
- * @param config 安全配置（可选）
- * @throws SecurityError 当安全验证失败时抛出
+ * @param inputPath Path to validate
+ * @param config Security configuration (optional)
+ * @throws SecurityError Thrown when security validation fails
  *
  * @example
- * // 正常使用
+ * // Normal usage
  * await validatePath('./src/index.ts');
  *
- * // 带白名单
+ * // With whitelist
  * await validatePath('./src/index.ts', { allowedDirectories: ['./src'] });
  *
- * // 路径遍历攻击会抛出错误
- * await validatePath('../../../etc/passwd'); // 抛出 SecurityError
+ * // Path traversal attack will throw error
+ * await validatePath('../../../etc/passwd'); // Throws SecurityError
  */
 export async function validatePath(inputPath, config) {
     const mergedConfig = { ...DEFAULT_SECURITY_CONFIG, ...config };
-    // 1. 检查路径遍历攻击
+    // 1. Check for path traversal attack
     if (hasPathTraversal(inputPath)) {
-        throw new SecurityError(`路径遍历攻击被阻止: "${inputPath}" 包含不允许的路径遍历模式`, 'PATH_TRAVERSAL', inputPath);
+        throw new SecurityError(`Path traversal attack blocked: "${inputPath}" contains disallowed path traversal pattern`, 'PATH_TRAVERSAL', inputPath);
     }
-    // 2. 检查是否为敏感文件
+    // 2. Check if it is a sensitive file
     if (isSensitiveFile(inputPath, mergedConfig.sensitivePatterns)) {
-        throw new SecurityError(`访问敏感文件被拒绝: "${inputPath}" 匹配敏感文件模式`, 'SENSITIVE_FILE', inputPath);
+        throw new SecurityError(`Access to sensitive file denied: "${inputPath}" matches sensitive file pattern`, 'SENSITIVE_FILE', inputPath);
     }
-    // 3. 检查是否在白名单目录内
+    // 3. Check if within whitelist directory
     if (!isWithinAllowedDirectory(inputPath, mergedConfig.allowedDirectories || [])) {
-        throw new SecurityError(`访问被拒绝: "${inputPath}" 不在允许的目录列表中`, 'ACCESS_DENIED', inputPath);
+        throw new SecurityError(`Access denied: "${inputPath}" is not in the allowed directory list`, 'ACCESS_DENIED', inputPath);
     }
-    // 4. 检查符号链接（如果文件存在）
+    // 4. Check for symbolic link (if file exists)
     if (!mergedConfig.allowSymlinks) {
         try {
             if (await isSymlink(inputPath)) {
-                throw new SecurityError(`符号链接访问被拒绝: "${inputPath}" 是一个符号链接`, 'SYMLINK_DETECTED', inputPath);
+                throw new SecurityError(`Symlink access denied: "${inputPath}" is a symbolic link`, 'SYMLINK_DETECTED', inputPath);
             }
         }
         catch (error) {
-            // 如果是 SecurityError，继续抛出
+            // If it's a SecurityError, continue throwing
             if (error instanceof SecurityError) {
                 throw error;
             }
-            // 文件不存在时忽略符号链接检查（让后续的文件读取来处理）
+            // Ignore symlink check when file doesn't exist (let subsequent file reading handle it)
         }
     }
 }
 /**
- * 批量验证多个路径的安全性
+ * Batch validate the security of multiple paths
  *
- * @param paths 要验证的路径数组
- * @param config 安全配置（可选）
- * @throws SecurityError 当任何路径验证失败时抛出
+ * @param paths Array of paths to validate
+ * @param config Security configuration (optional)
+ * @throws SecurityError Thrown when any path validation fails
  *
  * @example
  * await validatePaths(['./src/a.ts', './src/b.ts']);
@@ -303,44 +303,44 @@ export async function validatePaths(paths, config) {
     }
 }
 /**
- * 验证文件大小是否在限制内
+ * Validate if file size is within limits
  *
- * @param filePath 文件路径
- * @param maxSize 最大文件大小（字节）
- * @throws SecurityError 当文件大小超限时抛出
+ * @param filePath File path
+ * @param maxSize Maximum file size (bytes)
+ * @throws SecurityError Thrown when file size exceeds limit
  */
 export async function validateFileSize(filePath, maxSize = DEFAULT_SECURITY_CONFIG.maxFileSize) {
     try {
         const size = await getFileSize(filePath);
         if (size > maxSize) {
-            throw new SecurityError(`文件大小超限: "${filePath}" 大小为 ${formatBytes(size)}，超过限制 ${formatBytes(maxSize)}`, 'SIZE_EXCEEDED', filePath);
+            throw new SecurityError(`File size exceeded: "${filePath}" size is ${formatBytes(size)}, exceeds limit of ${formatBytes(maxSize)}`, 'SIZE_EXCEEDED', filePath);
         }
     }
     catch (error) {
         if (error instanceof SecurityError) {
             throw error;
         }
-        // 文件不存在时忽略大小检查（让后续的文件读取来处理）
+        // Ignore size check when file doesn't exist (let subsequent file reading handle it)
     }
 }
 /**
- * 验证文件数量是否在限制内
+ * Validate if file count is within limits
  *
- * @param count 文件数量
- * @param maxFiles 最大文件数量
- * @throws SecurityError 当文件数量超限时抛出
+ * @param count File count
+ * @param maxFiles Maximum file count
+ * @throws SecurityError Thrown when file count exceeds limit
  */
 export function validateFileCount(count, maxFiles = DEFAULT_SECURITY_CONFIG.maxFiles) {
     if (count > maxFiles) {
-        throw new SecurityError(`文件数量超限: 发现 ${count} 个文件，超过限制 ${maxFiles} 个`, 'FILE_LIMIT_EXCEEDED');
+        throw new SecurityError(`File count exceeded: Found ${count} files, exceeds limit of ${maxFiles}`, 'FILE_LIMIT_EXCEEDED');
     }
 }
-// ============== 辅助函数 ==============
+// ============== Helper Functions ==============
 /**
- * 格式化字节数为人类可读格式
+ * Format bytes to human-readable format
  *
- * @param bytes 字节数
- * @returns 格式化后的字符串
+ * @param bytes Byte count
+ * @returns Formatted string
  */
 function formatBytes(bytes) {
     if (bytes === 0)
@@ -351,16 +351,16 @@ function formatBytes(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 /**
- * 合并安全配置
+ * Merge security configurations
  *
- * @param userConfig 用户提供的配置
- * @returns 合并后的完整配置
+ * @param userConfig User-provided configuration
+ * @returns Merged complete configuration
  */
 export function mergeSecurityConfig(userConfig) {
     return {
         ...DEFAULT_SECURITY_CONFIG,
         ...userConfig,
-        // 合并敏感文件模式（而不是覆盖）
+        // Merge sensitive file patterns (rather than overwrite)
         sensitivePatterns: [
             ...DEFAULT_SENSITIVE_PATTERNS,
             ...(userConfig?.sensitivePatterns || [])

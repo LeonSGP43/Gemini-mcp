@@ -1,6 +1,6 @@
 /**
  * Tool 8: list_models
- * 列出所有可用的 Gemini 模型
+ * List all available Gemini models
  */
 
 import {
@@ -12,43 +12,43 @@ import {
 } from '../config/models.js';
 
 /**
- * 模型信息输出接口（更结构化）
+ * Model information output interface (more structured)
  */
 export interface ModelInfo {
   id: string;
   name: string;
   description: string;
-  /** 结构化的能力信息 */
+  /** Structured capability information */
   capabilities: ModelCapabilities;
-  /** 推荐使用场景 */
+  /** Recommended use cases */
   useCases: string[];
-  /** 是否为默认模型 */
+  /** Whether this is the default model */
   isDefault: boolean;
-  /** 支持的功能列表 */
+  /** List of supported features */
   features: string[];
-  /** 最佳适用场景 */
+  /** Best suited scenarios */
   bestFor: string[];
-  /** 最后更新时间 */
+  /** Last update time */
   lastUpdate: string;
 }
 
 /**
- * list_models 返回结果接口
+ * list_models return result interface
  */
 export interface ListModelsResult {
-  /** 所有可用模型 */
+  /** All available models */
   models: ModelInfo[];
-  /** 默认模型 ID */
+  /** Default model ID */
   defaultModel: string;
-  /** 模型总数 */
+  /** Total number of models */
   totalCount: number;
-  /** 按场景的模型推荐 */
+  /** Model recommendations by scenario */
   recommendations: typeof MODEL_RECOMMENDATIONS;
 }
 
 /**
- * 处理 list_models 请求
- * 返回所有可用模型的详细信息，包括结构化的能力信息
+ * Handle list_models request
+ * Returns detailed information about all available models, including structured capability information
  */
 export async function handleListModels(): Promise<ListModelsResult> {
   const models = getAllModels();

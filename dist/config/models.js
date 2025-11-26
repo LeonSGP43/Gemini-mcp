@@ -1,11 +1,11 @@
 /**
- * Gemini 模型配置
- * 基于官方文档: https://ai.google.dev/gemini-api/docs/models
- * 最后更新: 2025年11月
+ * Gemini model configuration
+ * Based on official documentation: https://ai.google.dev/gemini-api/docs/models
+ * Last updated: November 2025
  */
 /**
- * 支持的 Gemini 模型列表
- * 精选4个模型，专注于UI生成和前端开发
+ * Supported Gemini model list
+ * Curated 4 models focused on UI generation and frontend development
  */
 export const SUPPORTED_MODELS = {
     'gemini-3-pro-preview': {
@@ -25,7 +25,7 @@ export const SUPPORTED_MODELS = {
         },
         features: ['thinking', 'multimodal', 'function_calling', 'grounding', 'system_instructions'],
         bestFor: ['UI generation', 'Frontend development', 'Design to code', 'Interactive animations', 'Complex reasoning'],
-        useCases: ['UI 生成', '前端开发', '设计稿转代码', '交互动画', '复杂推理'],
+        useCases: ['UI generation', 'Frontend development', 'Design to code', 'Interactive animations', 'Complex reasoning'],
         thinking: true,
         lastUpdate: 'November 2025',
         isDefault: true
@@ -47,7 +47,7 @@ export const SUPPORTED_MODELS = {
         },
         features: ['thinking', 'multimodal', 'function_calling', 'grounding', 'system_instructions'],
         bestFor: ['General coding', 'Large codebase analysis', 'Fallback option'],
-        useCases: ['通用编码', '大型代码库分析', '代码审查', '文档生成'],
+        useCases: ['General coding', 'Large codebase analysis', 'Code review', 'Documentation generation'],
         thinking: true,
         lastUpdate: 'June 2025',
         isDefault: false
@@ -69,7 +69,7 @@ export const SUPPORTED_MODELS = {
         },
         features: ['thinking', 'multimodal', 'function_calling', 'grounding', 'system_instructions'],
         bestFor: ['High-frequency tasks', 'Batch processing', 'Cost optimization'],
-        useCases: ['快速问答', '实时分析', '批量处理', '成本优化'],
+        useCases: ['Quick Q&A', 'Real-time analysis', 'Batch processing', 'Cost optimization'],
         thinking: true,
         lastUpdate: 'June 2025',
         isDefault: false
@@ -91,22 +91,22 @@ export const SUPPORTED_MODELS = {
         },
         features: ['thinking', 'multimodal', 'function_calling', 'system_instructions'],
         bestFor: ['Simple queries', 'Quick prototypes', 'Maximum cost savings'],
-        useCases: ['简单查询', '快速验证', '低延迟场景', '最大成本节省'],
+        useCases: ['Simple queries', 'Quick validation', 'Low latency scenarios', 'Maximum cost savings'],
         thinking: true,
         lastUpdate: 'July 2025',
         isDefault: false
     }
 };
 /**
- * 获取默认模型
+ * Get default model
  */
 export function getDefaultModel() {
     return SUPPORTED_MODELS['gemini-3-pro-preview'];
 }
 /**
- * 获取模型配置
- * @param modelId - 模型ID
- * @returns 模型配置，如果不存在则返回默认模型
+ * Get model configuration
+ * @param modelId - Model ID
+ * @returns Model configuration, returns default model if not found
  */
 export function getModelConfig(modelId) {
     if (!modelId) {
@@ -115,21 +115,21 @@ export function getModelConfig(modelId) {
     return SUPPORTED_MODELS[modelId] || getDefaultModel();
 }
 /**
- * 验证模型是否支持
- * @param modelId - 模型ID
- * @returns 是否支持该模型
+ * Validate if model is supported
+ * @param modelId - Model ID
+ * @returns Whether the model is supported
  */
 export function isModelSupported(modelId) {
     return modelId in SUPPORTED_MODELS;
 }
 /**
- * 获取所有支持的模型列表
+ * Get all supported models list
  */
 export function getAllModels() {
     return Object.values(SUPPORTED_MODELS);
 }
 /**
- * 模型选择建议
+ * Model selection recommendations
  */
 export const MODEL_RECOMMENDATIONS = {
     ui_generation: 'gemini-3-pro-preview',

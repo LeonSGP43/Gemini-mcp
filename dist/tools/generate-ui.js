@@ -48,76 +48,76 @@ When given only description:
 - Choose appropriate color schemes
 - Add delightful micro-interactions`;
 /**
- * 根据技术栈上下文构建额外的提示词
- * @param techContext 技术栈上下文
- * @returns 技术栈相关的提示词
+ * Build additional prompts based on tech stack context
+ * @param techContext Tech stack context
+ * @returns Tech stack related prompts
  */
 function buildTechContextPrompt(techContext) {
     const parts = [];
-    parts.push('\n## 技术栈要求\n');
+    parts.push('\n## Tech Stack Requirements\n');
     if (techContext.cssFramework) {
         switch (techContext.cssFramework) {
             case 'tailwind':
-                parts.push('- CSS 框架: 使用 Tailwind CSS 类名，不要写原生 CSS 样式，使用 Tailwind 的响应式前缀（sm:, md:, lg:）\n');
+                parts.push('- CSS Framework: Use Tailwind CSS class names, do not write native CSS styles, use Tailwind responsive prefixes (sm:, md:, lg:)\n');
                 break;
             case 'bootstrap':
-                parts.push('- CSS 框架: 使用 Bootstrap 类名和组件\n');
+                parts.push('- CSS Framework: Use Bootstrap class names and components\n');
                 break;
             case 'styled-components':
-                parts.push('- CSS 框架: 使用 styled-components，创建样式化组件\n');
+                parts.push('- CSS Framework: Use styled-components, create styled components\n');
                 break;
             case 'css-modules':
-                parts.push('- CSS 框架: 使用 CSS Modules，创建 .module.css 文件\n');
+                parts.push('- CSS Framework: Use CSS Modules, create .module.css files\n');
                 break;
             case 'emotion':
-                parts.push('- CSS 框架: 使用 Emotion，使用 css prop 或 styled API\n');
+                parts.push('- CSS Framework: Use Emotion, use css prop or styled API\n');
                 break;
         }
     }
     if (techContext.uiLibrary) {
         switch (techContext.uiLibrary) {
             case 'shadcn':
-                parts.push('- UI 组件库: 使用 shadcn/ui 组件，遵循 shadcn 的命名规范和结构，从 @/components/ui 导入\n');
+                parts.push('- UI Component Library: Use shadcn/ui components, follow shadcn naming conventions and structure, import from @/components/ui\n');
                 break;
             case 'antd':
-                parts.push('- UI 组件库: 使用 Ant Design 组件，从 antd 导入\n');
+                parts.push('- UI Component Library: Use Ant Design components, import from antd\n');
                 break;
             case 'mui':
-                parts.push('- UI 组件库: 使用 Material-UI (MUI) 组件，从 @mui/material 导入\n');
+                parts.push('- UI Component Library: Use Material-UI (MUI) components, import from @mui/material\n');
                 break;
             case 'chakra':
-                parts.push('- UI 组件库: 使用 Chakra UI 组件，从 @chakra-ui/react 导入\n');
+                parts.push('- UI Component Library: Use Chakra UI components, import from @chakra-ui/react\n');
                 break;
             case 'radix':
-                parts.push('- UI 组件库: 使用 Radix UI 原语组件，从 @radix-ui 导入\n');
+                parts.push('- UI Component Library: Use Radix UI primitive components, import from @radix-ui\n');
                 break;
         }
     }
     if (techContext.typescript) {
-        parts.push('- 语言: 使用 TypeScript，添加完整的类型定义和 Props 接口\n');
+        parts.push('- Language: Use TypeScript, add complete type definitions and Props interfaces\n');
     }
     if (techContext.stateManagement) {
         switch (techContext.stateManagement) {
             case 'zustand':
-                parts.push('- 状态管理: 如需要状态管理，使用 Zustand\n');
+                parts.push('- State Management: If state management is needed, use Zustand\n');
                 break;
             case 'redux':
-                parts.push('- 状态管理: 如需要状态管理，使用 Redux Toolkit\n');
+                parts.push('- State Management: If state management is needed, use Redux Toolkit\n');
                 break;
             case 'jotai':
-                parts.push('- 状态管理: 如需要状态管理，使用 Jotai\n');
+                parts.push('- State Management: If state management is needed, use Jotai\n');
                 break;
             case 'recoil':
-                parts.push('- 状态管理: 如需要状态管理，使用 Recoil\n');
+                parts.push('- State Management: If state management is needed, use Recoil\n');
                 break;
         }
     }
     return parts.join('');
 }
 /**
- * 从 package.json 自动检测技术栈
- * @param configPath package.json 文件路径
- * @returns 检测到的技术栈上下文
+ * Automatically detect tech stack from package.json
+ * @param configPath package.json file path
+ * @returns Detected tech stack context
  */
 async function detectTechStackFromConfig(configPath) {
     try {
@@ -128,7 +128,7 @@ async function detectTechStackFromConfig(configPath) {
             ...(pkg.devDependencies || {})
         };
         const techContext = {};
-        // 检测 CSS 框架
+        // Detect CSS framework
         if (deps['tailwindcss']) {
             techContext.cssFramework = 'tailwind';
         }
@@ -141,7 +141,7 @@ async function detectTechStackFromConfig(configPath) {
         else if (deps['@emotion/react'] || deps['@emotion/styled']) {
             techContext.cssFramework = 'emotion';
         }
-        // 检测 UI 库（注意：shadcn 通常不在 dependencies 中，而是通过 class-variance-authority 检测）
+        // Detect UI library (Note: shadcn is usually not in dependencies, detected via class-variance-authority)
         if (deps['class-variance-authority'] || deps['@radix-ui/react-dialog']) {
             techContext.uiLibrary = 'shadcn';
         }
@@ -154,9 +154,9 @@ async function detectTechStackFromConfig(configPath) {
         else if (deps['@chakra-ui/react']) {
             techContext.uiLibrary = 'chakra';
         }
-        // 检测 TypeScript
+        // Detect TypeScript
         techContext.typescript = !!deps['typescript'];
-        // 检测状态管理
+        // Detect state management
         if (deps['zustand']) {
             techContext.stateManagement = 'zustand';
         }
@@ -172,7 +172,7 @@ async function detectTechStackFromConfig(configPath) {
         return techContext;
     }
     catch (error) {
-        // 如果无法读取或解析配置文件，返回空对象
+        // If unable to read or parse config file, return empty object
         logError('detectTechStackFromConfig', error);
         return {};
     }
@@ -182,32 +182,32 @@ async function detectTechStackFromConfig(configPath) {
  */
 export async function handleGenerateUI(params, client) {
     try {
-        // 验证必需参数
+        // Validate required parameters
         validateRequired(params.description, 'description');
         validateString(params.description, 'description', 10);
-        // 验证可选参数
+        // Validate optional parameters
         const framework = params.framework || 'vanilla';
-        const includeAnimation = params.includeAnimation !== false; // 默认 true
-        const responsive = params.responsive !== false; // 默认 true
+        const includeAnimation = params.includeAnimation !== false; // Default true
+        const responsive = params.responsive !== false; // Default true
         if (params.framework) {
             validateFramework(params.framework);
         }
         if (params.style) {
             validateUIStyle(params.style);
         }
-        // 【新增】处理技术栈上下文
+        // [NEW] Handle tech stack context
         let techContext = {};
         let detectedTechContext;
-        // 如果提供了 configPath，自动检测技术栈
+        // If configPath is provided, automatically detect tech stack
         if (params.configPath) {
             detectedTechContext = await detectTechStackFromConfig(params.configPath);
             techContext = { ...detectedTechContext };
         }
-        // 如果提供了 techContext，覆盖自动检测的值
+        // If techContext is provided, override auto-detected values
         if (params.techContext) {
             techContext = { ...techContext, ...params.techContext };
         }
-        // 构建提示词
+        // Build prompt
         let prompt = `Generate a ${framework} UI component based on the following requirements:\n\n`;
         prompt += `Description: ${params.description}\n\n`;
         if (params.style) {
@@ -216,7 +216,7 @@ export async function handleGenerateUI(params, client) {
         prompt += `Framework: ${framework}\n`;
         prompt += `Include Animations: ${includeAnimation ? 'Yes' : 'No'}\n`;
         prompt += `Responsive: ${responsive ? 'Yes' : 'No'}\n`;
-        // 【新增】添加技术栈上下文到提示词
+        // [NEW] Add tech stack context to prompt
         const hasTechContext = techContext.cssFramework || techContext.uiLibrary ||
             techContext.typescript || techContext.stateManagement;
         if (hasTechContext) {
@@ -227,7 +227,7 @@ export async function handleGenerateUI(params, client) {
             prompt += `Please provide a complete HTML file with inline CSS and JavaScript.\n`;
         }
         else {
-            // 根据 TypeScript 设置调整输出要求
+            // Adjust output requirements based on TypeScript setting
             if (techContext.typescript) {
                 prompt += `Please provide a complete ${framework} component with TypeScript (.tsx) and all necessary imports.\n`;
             }
@@ -236,10 +236,10 @@ export async function handleGenerateUI(params, client) {
             }
         }
         prompt += `Return ONLY the code, no explanations.`;
-        // 调用 Gemini API
+        // Call Gemini API
         let code;
         if (params.designImage) {
-            // 多模态：文本 + 图片
+            // Multimodal: text + image
             code = await client.generateMultimodal(prompt, [params.designImage], {
                 systemInstruction: UI_GENERATION_SYSTEM_PROMPT,
                 temperature: 0.7,
@@ -247,23 +247,23 @@ export async function handleGenerateUI(params, client) {
             });
         }
         else {
-            // 仅文本
+            // Text only
             code = await client.generate(prompt, {
                 systemInstruction: UI_GENERATION_SYSTEM_PROMPT,
                 temperature: 0.7,
                 maxTokens: 8192
             });
         }
-        // 清理代码输出（移除 markdown 代码块）
+        // Clean code output (remove markdown code blocks)
         code = cleanCodeOutput(code);
-        // 对于 React/Vue/Svelte，可能有多个文件
+        // For React/Vue/Svelte, there may be multiple files
         const files = framework !== 'vanilla' ? extractFiles(code, framework, techContext.typescript) : undefined;
         return {
             code,
             framework,
             files,
             preview: framework === 'vanilla' ? code : undefined,
-            // 【新增】返回检测到的技术栈信息
+            // [NEW] Return detected tech stack information
             detectedTechContext: detectedTechContext
         };
     }
@@ -283,14 +283,14 @@ function cleanCodeOutput(code) {
     return code.trim();
 }
 /**
- * 从代码中提取多个文件（用于 React/Vue/Svelte）
- * @param code 生成的代码
- * @param framework 框架类型
- * @param useTypescript 是否使用 TypeScript
+ * Extract multiple files from code (for React/Vue/Svelte)
+ * @param code Generated code
+ * @param framework Framework type
+ * @param useTypescript Whether to use TypeScript
  */
 function extractFiles(code, framework, useTypescript) {
-    // 目前返回单个文件
-    // 未来可以解析 Gemini 返回的多文件内容
+    // Currently returns a single file
+    // Future: can parse multi-file content returned by Gemini
     let extension;
     if (framework === 'react') {
         extension = useTypescript ? 'tsx' : 'jsx';

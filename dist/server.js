@@ -34,17 +34,17 @@ await setupProxy();
 if (process.stdin.setEncoding) {
     process.stdin.setEncoding('utf8');
 }
-// 全局状态
+// Global state
 let geminiClient = null;
 let isInitialized = false;
 /**
- * 发送响应到 stdout
+ * Send response to stdout
  */
 function sendResponse(response) {
     console.log(JSON.stringify(response));
 }
 /**
- * 发送错误响应
+ * Send error response
  */
 function sendError(id, code, message, data) {
     sendResponse({
@@ -54,7 +54,7 @@ function sendError(id, code, message, data) {
     });
 }
 /**
- * 处理 initialize 请求
+ * Handle initialize request
  */
 function handleInitialize(request) {
     const result = {
@@ -77,7 +77,7 @@ function handleInitialize(request) {
     isInitialized = true;
 }
 /**
- * 处理 tools/list 请求
+ * Handle tools/list request
  */
 function handleToolsList(request) {
     sendResponse({
@@ -89,7 +89,7 @@ function handleToolsList(request) {
     });
 }
 /**
- * 处理 tools/call 请求
+ * Handle tools/call request
  */
 async function handleToolsCall(request) {
     if (!isInitialized) {
@@ -97,7 +97,7 @@ async function handleToolsCall(request) {
         return;
     }
     const { name, arguments: args } = request.params;
-    // 初始化 Gemini 客户端（如果还没有）
+    // Initialize Gemini client (if not already)
     if (!geminiClient) {
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
@@ -108,7 +108,7 @@ async function handleToolsCall(request) {
     }
     try {
         let result;
-        // 路由到对应的工具处理器
+        // Route to corresponding tool handler
         switch (name) {
             case TOOL_NAMES.LIST_MODELS:
                 result = await handleListModels();
@@ -138,7 +138,7 @@ async function handleToolsCall(request) {
                 sendError(request.id, ERROR_CODES.METHOD_NOT_FOUND, `Unknown tool: ${name}`);
                 return;
         }
-        // 发送成功响应
+        // Send success response
         sendResponse({
             jsonrpc: '2.0',
             id: request.id,
@@ -154,7 +154,7 @@ async function handleToolsCall(request) {
     }
     catch (error) {
         logError(`Tool: ${name}`, error);
-        // 根据错误类型返回相应的错误
+        // Return appropriate error based on error type
         if (error.message?.includes('not yet implemented')) {
             sendError(request.id, ERROR_CODES.INTERNAL_ERROR, error.message);
         }
@@ -169,7 +169,7 @@ async function handleToolsCall(request) {
     }
 }
 /**
- * 处理请求
+ * Handle request
  */
 async function handleRequest(request) {
     try {
@@ -201,7 +201,7 @@ async function handleRequest(request) {
     }
 }
 /**
- * 主函数
+ * Main function
  */
 function main() {
     console.error(`🚀 ${SERVER_INFO.name} v${SERVER_INFO.version}`);
@@ -211,7 +211,7 @@ function main() {
     console.error('');
     console.error('Waiting for requests...');
     console.error('');
-    // 读取 stdin 逐行处理
+    // Read stdin line by line
     const rl = createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -233,7 +233,7 @@ function main() {
         console.error('Connection closed');
         process.exit(0);
     });
-    // 处理进程信号
+    // Handle process signals
     process.on('SIGINT', () => {
         console.error('\nShutting down...');
         process.exit(0);
@@ -243,6 +243,6 @@ function main() {
         process.exit(0);
     });
 }
-// 启动服务器
+// Start server
 main();
 //# sourceMappingURL=server.js.map

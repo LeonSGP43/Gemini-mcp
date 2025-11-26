@@ -1,50 +1,50 @@
 /**
- * 错误处理工具
+ * Error handling utilities
  */
 import { ERROR_CODES } from '../config/constants.js';
 /**
- * 创建 MCP 错误对象
+ * Create MCP error object
  */
 export function createMCPError(code, message, data) {
     return { code, message, data };
 }
 /**
- * 处理 API 错误
+ * Handle API errors
  */
 export function handleAPIError(error) {
-    // API Key 错误
+    // API Key error
     if (error.message?.includes('API key') || error.message?.includes('Invalid key')) {
         return createMCPError(ERROR_CODES.API_ERROR, 'Invalid API key. Please check your GEMINI_API_KEY environment variable.', { originalError: error.message });
     }
-    // 配额错误
+    // Quota error
     if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
         return createMCPError(ERROR_CODES.RATE_LIMIT, 'API quota exceeded or rate limit reached. Please try again later.', { originalError: error.message });
     }
-    // 超时错误
+    // Timeout error
     if (error.message?.includes('timeout')) {
         return createMCPError(ERROR_CODES.TIMEOUT, 'Request timeout. The operation took too long to complete.', { originalError: error.message });
     }
-    // 模型不支持
+    // Model not supported
     if (error.message?.includes('model') || error.message?.includes('not found')) {
         return createMCPError(ERROR_CODES.MODEL_NOT_SUPPORTED, 'The specified model is not supported or not available.', { originalError: error.message });
     }
-    // 通用 API 错误
+    // Generic API error
     return createMCPError(ERROR_CODES.API_ERROR, error.message || 'An error occurred while calling the Gemini API.', { originalError: error.message });
 }
 /**
- * 处理参数验证错误
+ * Handle parameter validation errors
  */
 export function handleValidationError(message, details) {
     return createMCPError(ERROR_CODES.INVALID_PARAMS, message, details);
 }
 /**
- * 处理内部错误
+ * Handle internal errors
  */
 export function handleInternalError(error) {
     return createMCPError(ERROR_CODES.INTERNAL_ERROR, 'Internal server error', { originalError: error.message });
 }
 /**
- * 安全的错误消息（不泄露敏感信息）
+ * Sanitize error message (prevent sensitive information leakage)
  */
 export function sanitizeErrorMessage(error) {
     if (typeof error === 'string') {
@@ -56,7 +56,7 @@ export function sanitizeErrorMessage(error) {
     return 'Unknown error';
 }
 /**
- * 记录错误（用于调试）
+ * Log error (for debugging)
  */
 export function logError(context, error) {
     const timestamp = new Date().toISOString();

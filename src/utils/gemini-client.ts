@@ -1,6 +1,6 @@
 /**
- * Gemini API 客户端封装
- * 提供统一的 API 调用接口，包含错误处理和重试逻辑
+ * Gemini API client wrapper
+ * Provides unified API interface with error handling and retry logic
  */
 
 import { GoogleGenAI } from '@google/genai';
@@ -25,7 +25,7 @@ export interface GenerateOptions {
 }
 
 /**
- * 根据文件扩展名获取 MIME 类型
+ * Get MIME type based on file extension
  */
 function getMimeType(ext: string): string {
   const mimeTypes: Record<string, string> = {
@@ -42,36 +42,36 @@ function getMimeType(ext: string): string {
 }
 
 /**
- * 将图片转换为 Base64 内联数据格式
- * 支持：文件路径、Base64 data URI
+ * Convert image to Base64 inline data format
+ * Supports: file path, Base64 data URI
  */
 function convertImageToInlineData(image: string): { mimeType: string; data: string } {
-  // 1. 已经是 Base64 data URI 格式
+  // 1. Already in Base64 data URI format
   if (image.startsWith('data:')) {
     const [metadata, data] = image.split(',');
     const mimeType = metadata.match(/:(.*?);/)?.[1] || 'image/png';
     return { mimeType, data };
   }
 
-  // 2. URL 格式 - 不支持
+  // 2. URL format - not supported
   if (image.startsWith('http://') || image.startsWith('https://')) {
     throw new Error(
       `URL images are not supported. Please provide a file path or Base64 data URI instead.`
     );
   }
 
-  // 3. 文件路径格式 - 读取文件并转换为 Base64
+  // 3. File path format - read file and convert to Base64
   try {
-    // 检查文件是否存在
+    // Check if file exists
     if (!fs.existsSync(image)) {
       throw new Error(`Image file not found: ${image}`);
     }
 
-    // 读取文件并转换为 Base64
+    // Read file and convert to Base64
     const fileBuffer = fs.readFileSync(image);
     const base64Data = fileBuffer.toString('base64');
 
-    // 获取 MIME 类型
+    // Get MIME type
     const ext = path.extname(image);
     const mimeType = getMimeType(ext);
 
@@ -101,7 +101,7 @@ export class GeminiClient {
   }
 
   /**
-   * 生成内容（文本）
+   * Generate content (text only)
    */
   async generate(prompt: string, options: GenerateOptions = {}): Promise<string> {
     try {
@@ -119,7 +119,7 @@ export class GeminiClient {
         }
       };
 
-      // 添加系统指令（如果提供）
+      // Add system instruction (if provided)
       if (options.systemInstruction) {
         requestBody.systemInstruction = {
           parts: [{ text: options.systemInstruction }]
@@ -134,10 +134,10 @@ export class GeminiClient {
   }
 
   /**
-   * 生成内容（多模态：文本 + 图片）
-   * 支持图片格式：
-   * - 文件路径：如 "./images/screenshot.png"
-   * - Base64 data URI：如 "data:image/png;base64,iVBORw0KGgo..."
+   * Generate content (multimodal: text + images)
+   * Supported image formats:
+   * - File path: e.g., "./images/screenshot.png"
+   * - Base64 data URI: e.g., "data:image/png;base64,iVBORw0KGgo..."
    */
   async generateMultimodal(
     prompt: string,
@@ -145,10 +145,10 @@ export class GeminiClient {
     options: GenerateOptions = {}
   ): Promise<string> {
     try {
-      // 构建内容：文本 + 图片
+      // Build content: text + images
       const parts: any[] = [{ text: prompt }];
 
-      // 处理每个图片（支持文件路径和 Base64）
+      // Process each image (supports file path and Base64)
       for (const image of images) {
         const { mimeType, data } = convertImageToInlineData(image);
         parts.push({
@@ -170,7 +170,7 @@ export class GeminiClient {
         }
       };
 
-      // 添加系统指令（如果提供）
+      // Add system instruction (if provided)
       if (options.systemInstruction) {
         requestBody.systemInstruction = {
           parts: [{ text: options.systemInstruction }]
@@ -185,7 +185,7 @@ export class GeminiClient {
   }
 
   /**
-   * 切换模型
+   * Switch model
    */
   setModel(modelId: string): void {
     this.modelId = modelId;
@@ -193,14 +193,14 @@ export class GeminiClient {
   }
 
   /**
-   * 获取当前模型
+   * Get current model
    */
   getModel(): string {
     return this.modelId;
   }
 
   /**
-   * 错误处理
+   * Error handling
    */
   private handleError(error: any): Error {
     if (error.message?.includes('API key')) {
@@ -217,7 +217,7 @@ export class GeminiClient {
 }
 
 /**
- * 创建 Gemini 客户端实例
+ * Create Gemini client instance
  */
 export function createGeminiClient(apiKey: string, model?: string): GeminiClient {
   return new GeminiClient({ apiKey, model });
