@@ -5,105 +5,102 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-11-26
+
+### 🎉 Major Rewrite - LKbaba Specialized Version
+
+This version is a complete rewrite focused on **UI generation and frontend development**, designed to complement Claude Code.
+
+### Added
+
+- **8 Specialized Tools**:
+  - `gemini_generate_ui` - Generate UI components from description or design images
+  - `gemini_multimodal_query` - Analyze images with natural language queries
+  - `gemini_fix_ui_from_screenshot` - Diagnose and fix UI issues from screenshots
+  - `gemini_create_animation` - Create interactive animations (CSS/Canvas/WebGL/Three.js)
+  - `gemini_analyze_content` - Analyze code, documents, or data
+  - `gemini_analyze_codebase` - Analyze entire codebase using 1M token context
+  - `gemini_brainstorm` - Generate creative ideas with feasibility assessment
+  - `list_models` - List available Gemini models
+
+- **4 Supported Models**:
+  - `gemini-3-pro-preview` (default) - Latest and most powerful for UI generation
+  - `gemini-2.5-pro` - Stable fallback option
+  - `gemini-2.5-flash` - Cost-effective for high-frequency tasks
+  - `gemini-2.5-flash-lite` - Maximum cost savings
+
+- **Proxy Support** - Automatic proxy configuration for users behind VPN/proxy
+- **File Path Support** - Image tools now accept file paths, automatically converted to Base64
+- **Modular Architecture** - Clean separation of concerns with tools, utils, and config directories
+
+### Changed
+
+- Complete project restructure for better maintainability
+- Updated to Gemini 3.0 Pro as default model
+- Simplified from 6 generic tools to 8 specialized tools
+- Improved error handling and validation
+- Enhanced system prompts for better output quality
+
+### Removed
+
+- Legacy WebSocket implementation
+- Generic text generation tool (replaced with specialized tools)
+- Token counting tool (not needed for this use case)
+- Embedding tool (not relevant for UI generation)
+- Help system (simplified documentation)
+
+---
+
+## Previous Versions (Original Project)
+
+The following versions are from the original [aliargun/mcp-server-gemini](https://github.com/aliargun/mcp-server-gemini) project.
+
 ## [4.2.2] - 2025-07-08
 
 ### Fixed
 - Fixed image truncation issue by adding crlfDelay: Infinity to readline interface
 - Added proper UTF-8 encoding for stdin to handle large Base64 data
-- Improved error handling and debugging for image analysis
-- Added logging for Base64 data size to help diagnose issues
-
-### Changed
-- Enhanced error messages for image analysis failures
-- Added input validation for image analysis parameters
 
 ## [4.2.1] - 2025-07-08
 
 ### Fixed
-- Fixed conversation context role validation error by adding 'user' role to all user messages
-- Added proper role field to generate_text, analyze_image, and count_tokens API calls
-- Resolved "Invalid role" error when using conversation_id feature
+- Fixed conversation context role validation error
 
 ## [4.2.0] - 2025-07-08
 
 ### Changed
 - Cleaned up repository by removing legacy WebSocket implementation files
-- Removed unused dependencies (ws and @types/ws)
-- Streamlined codebase to only include stdio-based MCP implementation
 
 ### Security
 - Performed comprehensive security audit
-- Verified no exposed secrets or API keys
-- Confirmed all dependencies are vulnerability-free
-- API keys only accessed via environment variables
-
-### Removed
-- `src/server.ts` - Legacy WebSocket server
-- `src/index.ts` - Old entry point
-- `src/handlers.ts` - Unused handler functions
-- `src/protocol.ts` - Legacy protocol definitions
-- `src/stdio-server.ts` - Superseded by enhanced-stdio-server
-- WebSocket dependencies
 
 ## [4.1.0] - 2025-07-07
 
 ### Added
-- Self-documenting `get_help` tool for discovering features within MCP clients
-- New MCP resources for documentation access:
-  - `gemini://help/usage` - Usage guide
-  - `gemini://help/parameters` - Parameters reference  
-  - `gemini://help/examples` - Example usage patterns
-- Support for `resources/read` to access documentation programmatically
-- Updated documentation to support all MCP clients (not just Claude Desktop)
-
-### Changed
-- Updated README to include setup instructions for multiple MCP clients
-- Enhanced documentation with comprehensive parameter references
+- Self-documenting `get_help` tool
+- MCP resources for documentation access
 
 ## [4.0.0] - 2025-07-07
 
 ### Added
-- Support for all latest Gemini models (as of July 2025):
-  - Gemini 2.5 series with thinking capabilities
-  - Gemini 2.0 series including pro-experimental
-  - Legacy 1.5 models for compatibility
-- 5 powerful tools:
-  - `generate_text` - Advanced text generation with all features
-  - `analyze_image` - Vision analysis capabilities
-  - `count_tokens` - Token counting for cost estimation
-  - `list_models` - Model discovery with filtering
-  - `embed_text` - Text embeddings for semantic search
-- Advanced features:
-  - JSON mode with schema validation
-  - Google Search grounding for current information
-  - System instructions for behavior control
-  - Conversation memory with session IDs
-  - Customizable safety settings
-  - Temperature, topK, topP controls
-- 3 MCP prompts for common tasks
-- 2 MCP resources for model and capability information
+- Support for Gemini 2.5 series with thinking capabilities
+- 5 powerful tools: generate_text, analyze_image, count_tokens, list_models, embed_text
+- JSON mode, Google Search grounding, system instructions
 
 ### Changed
 - Complete rewrite to use stdio-based MCP protocol
-- Switched to newline-delimited JSON (not Content-Length headers)
-- Updated to new @google/genai SDK
 
 ## [3.0.0] - 2025-07-07
 
 ### Changed
 - Migrated from WebSocket to stdio-based communication
-- Fixed MCP protocol implementation based on official spec
 
 ## [2.0.0] - 2025-07-07
 
 ### Changed
 - Updated from deprecated @google/generative-ai to @google/genai SDK
-- Fixed TypeScript ESM configuration
-- Added proper .js extensions to imports
 
 ## [1.0.0] - 2024-12-15
 
 ### Added
 - Initial release with WebSocket-based MCP server
-- Basic Gemini text generation support
-- TypeScript implementation

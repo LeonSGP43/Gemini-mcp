@@ -1,197 +1,232 @@
 # Gemini MCP Server
 
-[![smithery badge](https://smithery.ai/badge/mcp-server-gemini)](https://smithery.ai/server/mcp-server-gemini)
-[![npm version](https://img.shields.io/npm/v/mcp-server-gemini)](https://www.npmjs.com/package/mcp-server-gemini)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
 [![MCP Version](https://img.shields.io/badge/MCP-2024--11--05-green)](https://modelcontextprotocol.io/)
 
-A powerful MCP (Model Context Protocol) server that brings Google's latest Gemini AI models to your favorite development environment. Access Gemini 2.5's thinking capabilities, vision analysis, embeddings, and more through a seamless integration.
+A specialized MCP (Model Context Protocol) server focused on **UI generation and frontend development** using Google's latest Gemini 3.0 Pro model. Designed to complement Claude Code by handling what Gemini does best.
 
-🚀 **Works with**: Claude Desktop, Cursor, Windsurf, and any MCP-compatible client  
-🎯 **Why use this**: Get Gemini's cutting-edge AI features directly in your IDE with full parameter control  
-📚 **Self-documenting**: Built-in help system means you never need to leave your editor
+🚀 **Works with**: Claude Desktop, Claude Code, Cursor, Windsurf, and any MCP-compatible client
+🎯 **Specialization**: UI generation, design-to-code, interactive animations, visual debugging
+⚡ **Powered by**: Gemini 3.0 Pro (#1 on WebDev Arena for UI generation)
+
+## Why This Server?
+
+Claude Code excels at code planning, architecture design, and code review. But for UI generation and frontend development, Gemini 3.0 Pro is the leader:
+
+- **#1 on WebDev Arena** (1487 Elo) for UI generation
+- **Superior visual understanding**: Design mockups → pixel-perfect code
+- **Animation expertise**: Canvas, WebGL, CSS animations, Three.js
+- **Native multimodal**: Seamless image + text understanding
+
+> **Philosophy**: Let Claude be the commander, let Gemini be the specialist.
 
 ## Features
 
-- **6 Powerful Tools**: Text generation, image analysis, token counting, model listing, embeddings, and self-documenting help
-- **Latest Gemini Models**: Support for Gemini 2.5 series with thinking capabilities
-- **Advanced Features**: JSON mode, Google Search grounding, system instructions, conversation memory
-- **Full MCP Protocol**: Standard stdio communication for seamless integration with any MCP client
-- **Self-Documenting**: Built-in help system - no external docs needed
-- **TypeScript & ESM**: Modern, type-safe implementation
+### 8 Specialized Tools
+
+| Tool | Description | Priority |
+|------|-------------|----------|
+| `gemini_generate_ui` | Generate HTML/CSS/JS UI components from description or design image | 🔴 P0 |
+| `gemini_multimodal_query` | Analyze images with natural language queries | 🔴 P0 |
+| `gemini_fix_ui_from_screenshot` | Diagnose and fix UI issues from screenshots | 🔴 P0 |
+| `gemini_create_animation` | Create interactive animations (CSS/Canvas/WebGL/Three.js) | 🔴 P0 |
+| `gemini_analyze_content` | Analyze code, documents, or data | 🟡 P1 |
+| `gemini_analyze_codebase` | Analyze entire codebase (1M token context) | 🟡 P1 |
+| `gemini_brainstorm` | Generate creative ideas with feasibility assessment | 🟢 P2 |
+| `list_models` | List available Gemini models | 🟢 P2 |
 
 ### Supported Models
 
-| Model | Context | Features | Best For |
-|-------|---------|----------|----------|
-| gemini-2.5-pro | 2M tokens | Thinking, JSON, Grounding | Complex reasoning |
-| gemini-2.5-flash ⭐ | 1M tokens | Thinking, JSON, Grounding | General use |
-| gemini-2.5-flash-lite | 1M tokens | Thinking, JSON | Fast responses |
-| gemini-2.0-flash | 1M tokens | JSON, Grounding | Standard tasks |
-| gemini-1.5-pro | 2M tokens | JSON | Legacy support |
+| Model | Context | Best For | Default |
+|-------|---------|----------|---------|
+| `gemini-3-pro-preview` | 1M tokens | UI generation, frontend development | ✅ Yes |
+| `gemini-2.5-pro` | 1M tokens | General coding, fallback | ❌ No |
+| `gemini-2.5-flash` | 1M tokens | High-frequency tasks, cost optimization | ❌ No |
+| `gemini-2.5-flash-lite` | 1M tokens | Simple queries, maximum cost savings | ❌ No |
 
 ## Quick Start
 
-1. **Get Gemini API Key**
-   - Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
-   - Create a new API key
-   - **IMPORTANT**: Keep your API key secure and never commit it to version control
+### 1. Get Gemini API Key
 
-2. **Configure Your MCP Client**
+Visit [Google AI Studio](https://makersuite.google.com/app/apikey) and create an API key.
 
-   <details>
-   <summary><b>Claude Desktop</b></summary>
-   
-   Config location:
-   - Mac: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-   - Linux: `~/.config/Claude/claude_desktop_config.json`
+### 2. Configure Your MCP Client
 
-   ```json
-   {
-     "mcpServers": {
-       "gemini": {
-         "type": "stdio",
-         "command": "npx",
-         "args": ["-y", "github:aliargun/mcp-server-gemini"],
-         "env": {
-           "GEMINI_API_KEY": "your_api_key_here"
-         }
-       }
-     }
-   }
+<details>
+<summary><b>Claude Desktop / Claude Code</b></summary>
+
+Config location:
+- Mac: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+- Linux: `~/.config/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "gemini": {
+      "command": "npx",
+      "args": ["-y", "github:LKbaba/Gemini-mcp"],
+      "env": {
+        "GEMINI_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+**For users behind proxy/VPN**, add proxy environment variable:
+```json
+{
+  "mcpServers": {
+    "gemini": {
+      "command": "npx",
+      "args": ["-y", "github:LKbaba/Gemini-mcp"],
+      "env": {
+        "GEMINI_API_KEY": "your_api_key_here",
+        "HTTPS_PROXY": "http://127.0.0.1:7897"
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Cursor / Windsurf</b></summary>
+
+Add to your MCP settings:
+```json
+{
+  "gemini": {
+    "command": "npx",
+    "args": ["-y", "github:LKbaba/Gemini-mcp"],
+    "env": {
+      "GEMINI_API_KEY": "your_api_key_here"
+    }
+  }
+}
+```
+</details>
+
+### 3. Restart Your MCP Client
+
+## Usage Examples
+
+### UI Generation
+
+```
+"Generate a responsive pricing card with three tiers using React"
+"Create a modern login form with glassmorphism style"
+"Build a dashboard sidebar with smooth hover animations"
+```
+
+### Design to Code
+
+```
+"Convert this Figma screenshot to a React component" (attach image)
+"Implement this UI design pixel-perfectly" (attach image)
+```
+
+### Visual Debugging
+
+```
+"Fix the layout issue in this screenshot" (attach screenshot)
+"The button is misaligned on mobile, here's a screenshot" (attach screenshot)
+```
+
+### Animation Creation
+
+```
+"Create a particle system that follows the mouse cursor"
+"Build a 3D rotating cube with Three.js"
+"Make a smooth page transition animation with CSS"
+```
+
+### Code Analysis
+
+```
+"Analyze this codebase for security issues"
+"Review this function for performance improvements"
+"Explain this complex algorithm"
+```
+
+## Image Input Support
+
+All image-related tools support two input formats:
+
+1. **File paths** (recommended for local files):
    ```
-   </details>
-
-   <details>
-   <summary><b>Cursor</b></summary>
-   
-   Add to Cursor's MCP settings:
-   ```json
-   {
-     "gemini": {
-       "type": "stdio",
-       "command": "npx",
-       "args": ["-y", "github:aliargun/mcp-server-gemini"],
-       "env": {
-         "GEMINI_API_KEY": "your_api_key_here"
-       }
-     }
-   }
+   "./images/design.png"
+   "C:/Users/name/Desktop/screenshot.png"
    ```
-   </details>
 
-   <details>
-   <summary><b>Windsurf</b></summary>
-   
-   Configure in Windsurf's MCP settings following their documentation.
-   </details>
-
-   <details>
-   <summary><b>Other MCP Clients</b></summary>
-   
-   Use the standard MCP stdio configuration:
-   ```json
-   {
-     "type": "stdio",
-     "command": "npx",
-     "args": ["-y", "github:aliargun/mcp-server-gemini"],
-     "env": {
-       "GEMINI_API_KEY": "your_api_key_here"
-     }
-   }
+2. **Base64 data URIs**:
    ```
-   </details>
+   "data:image/png;base64,iVBORw0KGgo..."
+   ```
 
-3. **Restart Your MCP Client**
-
-## How to Use
-
-Once configured, you can use natural language in your MCP client to access Gemini's capabilities:
-
-### Basic Commands
-```
-"Use Gemini to explain quantum computing"
-"Analyze this image with Gemini" 
-"List all Gemini models"
-"Get help on using Gemini"
-```
-
-### Advanced Examples
-```
-"Use Gemini 2.5 Pro with temperature 0.3 to review this code"
-"Use Gemini in JSON mode to extract key points with schema {title, summary, tags}"
-"Use Gemini with grounding to research the latest in quantum computing"
-```
-
-📖 **[See the complete Usage Guide](USAGE_GUIDE.md)** for detailed examples and advanced features.
-
-## Why Gemini MCP Server?
-
-- **Access Latest Models**: Use Gemini 2.5 with thinking capabilities - Google's most advanced models
-- **Full Feature Set**: All Gemini API features including JSON mode, grounding, and system instructions  
-- **Easy Setup**: One-line npx installation, no complex configuration needed
-- **Production Ready**: Comprehensive error handling, TypeScript types, and extensive documentation
-- **Active Development**: Regular updates with new Gemini features as they're released
-
-## Documentation
-
-- **[Usage Guide](USAGE_GUIDE.md)** - Complete guide on using all tools and features
-- **[Parameters Reference](PARAMETERS_REFERENCE.md)** - Detailed documentation of all parameters
-- **[Quick Reference](QUICK_REFERENCE.md)** - Quick commands cheat sheet
-- **[Enhanced Features](ENHANCED_FEATURES.md)** - Detailed list of v4.0.0 capabilities
-- [Claude Desktop Setup Guide](docs/claude-desktop-setup.md) - Detailed setup instructions
-- [Examples and Usage](docs/examples.md) - Usage examples and advanced configuration
-- [Implementation Notes](docs/implementation-notes.md) - Technical implementation details
-- [Development Guide](docs/development-guide.md) - Guide for developers
-- [Troubleshooting Guide](docs/troubleshooting.md) - Common issues and solutions
+When you provide a file path, Claude Code will automatically read and convert it.
 
 ## Local Development
 
 ```bash
 # Clone repository
-git clone https://github.com/aliargun/mcp-server-gemini.git
-cd mcp-server-gemini
+git clone https://github.com/LKbaba/Gemini-mcp.git
+cd Gemini-mcp
 
 # Install dependencies
 npm install
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
+# Set up environment
+export GEMINI_API_KEY="your_api_key_here"
 
-# Start development server
-npm run dev
+# Build
+npm run build
+
+# Start server
+npm start
 ```
 
-## Contributing
+## Project Structure
 
-Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md).
+```
+src/
+├── config/
+│   ├── models.ts        # 模型配置
+│   └── constants.ts     # 全局常量
+├── tools/
+│   ├── definitions.ts   # MCP 工具定义
+│   ├── generate-ui.ts   # UI 生成
+│   ├── multimodal-query.ts  # 多模态查询
+│   ├── fix-ui.ts        # UI 修复
+│   ├── create-animation.ts  # 动画创建
+│   ├── analyze-content.ts   # 内容分析
+│   ├── analyze-codebase.ts  # 代码库分析
+│   ├── brainstorm.ts    # 头脑风暴
+│   └── list-models.ts   # 模型列表
+├── utils/
+│   ├── gemini-client.ts # Gemini API 客户端
+│   ├── error-handler.ts # 错误处理
+│   └── validators.ts    # 参数验证
+├── types.ts             # 类型定义
+└── server.ts            # 主服务器
+```
 
-## Common Issues
+## Credits
 
-1. **Connection Issues**
-   - Ensure your MCP client is properly restarted
-   - Check the client's logs (e.g., `~/Library/Logs/Claude/mcp-server-gemini.log` for Claude Desktop on Mac)
-   - Verify internet connection
-   - See [Troubleshooting Guide](docs/troubleshooting.md)
+Based on [aliargun/mcp-server-gemini](https://github.com/aliargun/mcp-server-gemini) v4.2.2
 
-2. **API Key Problems**
-   - Verify API key is correct
-   - Check API key has proper permissions
-   - Ensure the key is set in the environment variable
-   - See [Setup Guide](docs/claude-desktop-setup.md)
-
-## Security
-
-- API keys are handled via environment variables only
-- Never commit API keys to version control
-- The `.claude/` directory is excluded from git
-- No sensitive data is logged or stored
-- Regular security updates
-- If your API key is exposed, regenerate it immediately in Google Cloud Console
+Inspired by:
+- [RaiAnsar/claude_code-gemini-mcp](https://github.com/RaiAnsar/claude_code-gemini-mcp)
+- [cmdaltctr/claude-gemini-mcp-slim](https://github.com/cmdaltctr/claude-gemini-mcp-slim)
+- [RLabs-Inc/gemini-mcp](https://github.com/RLabs-Inc/gemini-mcp)
 
 ## License
 
 MIT
+
+---
+
+*Specialized for UI generation and frontend development*
+*Powered by Gemini 3.0 Pro*
