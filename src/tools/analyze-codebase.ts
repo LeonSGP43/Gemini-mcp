@@ -100,10 +100,10 @@ export interface AnalyzeCodebaseParams {
   outputFormat?: 'markdown' | 'json';
   
   /**
-   * Thinking level for complex analysis (default: HIGH)
-   * HIGH is recommended for architecture and security analysis
+   * Thinking level for complex analysis (default: high)
+   * high is recommended for architecture and security analysis
    */
-  thinkingLevel?: 'LOW' | 'HIGH';
+  thinkingLevel?: 'low' | 'high';
 }
 
 // Return interface
@@ -425,8 +425,8 @@ export async function handleAnalyzeCodebase(
 
     const prompt = buildCodebasePrompt(promptParams, metrics, outputFormat);
 
-    // Determine thinking level (default HIGH for complex analysis)
-    const thinkingLevel = params.thinkingLevel || 'HIGH';
+    // Determine thinking level (default high for complex analysis)
+    const thinkingLevel = params.thinkingLevel || 'high';
 
     let response: string;
 

@@ -136,8 +136,8 @@ Format your response as JSON with this structure:
                 images.push(params.targetState);
             }
         }
-        // Determine thinking level (default HIGH for complex debugging)
-        const thinkingLevel = params.thinkingLevel || 'HIGH';
+        // Determine thinking level (default high for complex debugging)
+        const thinkingLevel = params.thinkingLevel || 'high';
         let response;
         // Always use thinking mode with direct GoogleGenAI call
         const apiKey = process.env.GEMINI_API_KEY;

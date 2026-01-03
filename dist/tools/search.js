@@ -24,7 +24,7 @@ export async function handleSearch(params, apiKey) {
         if (params.context) {
             validateString(params.context, 'context', 2);
         }
-        const thinkingLevel = params.thinkingLevel || 'HIGH';
+        const thinkingLevel = params.thinkingLevel || 'high';
         const outputFormat = params.outputFormat || 'text';
         // Create AI client
         const ai = new GoogleGenAI({ apiKey });
