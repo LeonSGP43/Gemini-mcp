@@ -34,7 +34,7 @@ Add to your MCP config file:
   "mcpServers": {
     "gemini": {
       "command": "npx",
-      "args": ["-y", "github:LKbaba/Gemini-mcp"],
+      "args": ["-y", "@lkbaba/mcp-server-gemini"],
       "env": {
         "GEMINI_API_KEY": "your_api_key_here"
       }
@@ -110,7 +110,7 @@ Add proxy environment variable to your config:
   "mcpServers": {
     "gemini": {
       "command": "npx",
-      "args": ["-y", "github:LKbaba/Gemini-mcp"],
+      "args": ["-y", "@lkbaba/mcp-server-gemini"],
       "env": {
         "GEMINI_API_KEY": "your_api_key_here",
         "HTTPS_PROXY": "http://127.0.0.1:7897"
