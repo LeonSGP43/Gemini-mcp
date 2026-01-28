@@ -19,12 +19,16 @@ When answering questions:
 4. If search results are insufficient, acknowledge limitations
 5. Synthesize information from multiple sources when relevant`;
 
+// 支持的模型类型
+type SupportedModel = 'gemini-3-pro-preview' | 'gemini-3-flash-preview';
+
 // Parameter interface
 export interface SearchParams {
   query: string;
   context?: string;
   thinkingLevel?: 'low' | 'high';
   outputFormat?: 'text' | 'json';
+  model?: SupportedModel;  // v1.2.0: 新增模型选择参数
 }
 
 // Return interface
@@ -86,7 +90,8 @@ export async function handleSearch(
       prompt = `Context: ${params.context}\n\nQuestion: ${params.query}`;
     }
 
-    const model = 'gemini-3-pro-preview';
+    // v1.2.0: 使用用户选择的模型（默认 gemini-3-pro-preview）
+    const model = params.model || 'gemini-3-pro-preview';
     const contents = [
       {
         role: 'user',

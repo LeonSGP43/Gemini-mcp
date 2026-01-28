@@ -43,11 +43,15 @@ Output format:
 - Be concise but comprehensive
 - Use professional terminology`;
 
+// 支持的模型类型
+type SupportedModel = 'gemini-3-pro-preview' | 'gemini-3-flash-preview';
+
 export interface MultimodalQueryParams {
   prompt: string;
   images: string[];
   outputFormat?: 'text' | 'code' | 'json';
   context?: string;
+  model?: SupportedModel;  // v1.2.0: 新增模型选择参数
 }
 
 export interface MultimodalQueryResult {
@@ -91,6 +95,10 @@ export async function handleMultimodalQuery(
     } else if (outputFormat === 'code') {
       fullPrompt += `\n\nPlease provide your response as code only, no explanations.`;
     }
+
+    // v1.2.0: 设置用户选择的模型（默认 gemini-3-pro-preview）
+    const modelToUse = params.model || 'gemini-3-pro-preview';
+    client.setModel(modelToUse);
 
     // Call Gemini API with multimodal input
     const response = await client.generateMultimodal(

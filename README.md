@@ -2,7 +2,7 @@
 
 > **Give Claude Code the power of Gemini 3.0**
 
-An MCP server that connects Claude Code to Google's Gemini 3.0 Pro, unlocking capabilities that complement Claude's strengths.
+An MCP server that connects Claude Code to Google's Gemini 3.0, unlocking capabilities that complement Claude's strengths.
 
 ## Why Gemini + Claude?
 
@@ -10,7 +10,6 @@ An MCP server that connects Claude Code to Google's Gemini 3.0 Pro, unlocking ca
 |-------------------|----------|
 | **1M Token Context** | Analyze entire codebases in one shot |
 | **Google Search Grounding** | Get real-time documentation & latest info |
-| **#1 UI Generation** | Design-to-code with pixel-perfect accuracy |
 | **Multimodal Vision** | Understand screenshots, diagrams, designs |
 
 > **Philosophy**: Claude is the commander, Gemini is the specialist.
@@ -45,7 +44,7 @@ Add to your MCP config file:
 
 ### 3. Restart Claude Code
 
-## Tools (8)
+## Tools (5)
 
 ### Research & Search
 | Tool | Description |
@@ -58,18 +57,36 @@ Add to your MCP config file:
 | `gemini_analyze_codebase` | Analyze entire projects with 1M token context. Supports directory path, file paths, or direct content. |
 | `gemini_analyze_content` | Analyze code, documents, or data. Supports file path or direct content input. |
 
-### UI & Visual
+### Multimodal
 | Tool | Description |
 |------|-------------|
-| `gemini_generate_ui` | Generate UI components from description or design image. Supports React, Vue, Svelte, vanilla. |
-| `gemini_fix_ui_from_screenshot` | Visual Debug Loop - diagnose UI issues from screenshots and output git diff patches. |
 | `gemini_multimodal_query` | Analyze images with natural language. Understand designs, diagrams, screenshots. |
 
-### Creative & Utility
+### Creative
 | Tool | Description |
 |------|-------------|
 | `gemini_brainstorm` | Generate creative ideas with project context. Supports reading README, PRD files. |
-| `list_models` | List available Gemini models with capabilities and context windows. |
+
+## Model Selection (v1.2.0)
+
+All tools now support an optional `model` parameter:
+
+| Model | Speed | Best For |
+|-------|-------|----------|
+| `gemini-3-pro-preview` | Standard | Complex analysis, deep reasoning (default) |
+| `gemini-3-flash-preview` | Fast | Simple tasks, quick responses |
+
+**Example: Use Flash for faster response**
+```json
+{
+  "name": "gemini_analyze_content",
+  "arguments": {
+    "filePath": "./src/index.ts",
+    "task": "review",
+    "model": "gemini-3-flash-preview"
+  }
+}
+```
 
 ## Usage Examples
 
@@ -83,14 +100,9 @@ Add to your MCP config file:
 "Search for the latest Next.js 15 App Router documentation"
 ```
 
-### Design to Code
+### Analyze an Image
 ```
-"Generate a pricing card component matching this Figma screenshot" (attach image)
-```
-
-### Visual Debug Loop
-```
-"Fix the layout bug in this screenshot. Source file: ./src/components/Header.tsx" (attach screenshot)
+"Analyze this architecture diagram and explain the data flow" (attach image)
 ```
 
 ### Brainstorm with Context
@@ -121,14 +133,6 @@ Add proxy environment variable to your config:
 ```
 </details>
 
-## Supported Models
-
-| Model | Context | Best For |
-|-------|---------|----------|
-| `gemini-3-pro-preview` | 1M tokens | UI generation, complex analysis (default) |
-| `gemini-2.5-pro` | 1M tokens | General coding, fallback |
-| `gemini-2.5-flash` | 1M tokens | Fast tasks, cost optimization |
-
 ## Local Development
 
 <details>
@@ -149,18 +153,15 @@ npm start
 ```
 src/
 ├── config/
-│   ├── models.ts          # Model configurations
+│   ├── models.ts           # Model configurations
 │   └── constants.ts        # Global constants
 ├── tools/
 │   ├── definitions.ts      # MCP tool definitions
-│   ├── generate-ui.ts      # UI generation
 │   ├── multimodal-query.ts # Multimodal queries
-│   ├── fix-ui.ts           # Visual Debug Loop
 │   ├── analyze-content.ts  # Content analysis
 │   ├── analyze-codebase.ts # Codebase analysis
 │   ├── brainstorm.ts       # Brainstorming
-│   ├── search.ts           # Web search
-│   └── list-models.ts      # Model listing
+│   └── search.ts           # Web search
 ├── utils/
 │   ├── gemini-client.ts    # Gemini API client
 │   ├── file-reader.ts      # File system access

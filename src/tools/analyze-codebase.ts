@@ -98,12 +98,19 @@ export interface AnalyzeCodebaseParams {
   focus?: 'architecture' | 'security' | 'performance' | 'dependencies' | 'patterns';
   deepThink?: boolean;
   outputFormat?: 'markdown' | 'json';
-  
+
   /**
    * Thinking level for complex analysis (default: high)
    * high is recommended for architecture and security analysis
    */
   thinkingLevel?: 'low' | 'high';
+
+  /**
+   * v1.2.0: 模型选择参数
+   * 可选值: 'gemini-3-pro-preview' | 'gemini-3-flash-preview'
+   * 默认: 'gemini-3-pro-preview'
+   */
+  model?: 'gemini-3-pro-preview' | 'gemini-3-flash-preview';
 }
 
 // Return interface
@@ -448,8 +455,11 @@ export async function handleAnalyzeCodebase(
       parts: [{ text: prompt }]
     }];
 
+    // v1.2.0: 使用用户选择的模型（默认 gemini-3-pro-preview）
+    const modelToUse = params.model || 'gemini-3-pro-preview';
+
     const apiResult = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: modelToUse,
       config,
       contents,
     });

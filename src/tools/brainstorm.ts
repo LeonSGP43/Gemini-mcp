@@ -44,6 +44,9 @@ Quality requirements:
 - Consider technical, business, and user perspectives
 - Provide specific, actionable suggestions`;
 
+// 支持的模型类型
+type SupportedModel = 'gemini-3-pro-preview' | 'gemini-3-flash-preview';
+
 // Parameter interface
 export interface BrainstormParams {
   topic: string;
@@ -57,6 +60,7 @@ export interface BrainstormParams {
 
   count?: number;
   style?: 'innovative' | 'practical' | 'radical';
+  model?: SupportedModel;  // v1.2.0: 新增模型选择参数
 }
 
 // Idea interface
@@ -285,7 +289,11 @@ export async function handleBrainstorm(
       projectContext || undefined
     );
 
-    // Call Gemini API (using default model gemini-3-pro-preview)
+    // v1.2.0: 设置用户选择的模型（默认 gemini-3-pro-preview）
+    const modelToUse = params.model || 'gemini-3-pro-preview';
+    client.setModel(modelToUse);
+
+    // Call Gemini API
     const response = await client.generate(prompt, {
       systemInstruction: BRAINSTORM_SYSTEM_PROMPT,
       temperature: style === 'radical' ? 0.9 : (style === 'innovative' ? 0.8 : 0.6),
