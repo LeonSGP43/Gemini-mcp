@@ -91,7 +91,7 @@ export class GeminiClient {
 
   constructor(config: GeminiClientConfig) {
     this.client = new GoogleGenAI({ apiKey: config.apiKey });
-    this.modelId = config.model || 'gemini-3-pro-preview';
+    this.modelId = config.model || 'gemini-3.1-pro-preview';
     this.config = {
       apiKey: config.apiKey,
       model: this.modelId,

@@ -1,14 +1,14 @@
 // Base MCP Protocol Types
 export interface MCPRequest {
   jsonrpc: '2.0';
-  id: string | number;
+  id?: string | number | null;
   method: string;
   params?: any;
 }
 
 export interface MCPResponse {
   jsonrpc: '2.0';
-  id: string | number;
+  id: string | number | null;
   result?: any;
   error?: {
     code: number;

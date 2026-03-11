@@ -45,7 +45,7 @@ Quality requirements:
 - Provide specific, actionable suggestions`;
 
 // Supported model types
-type SupportedModel = 'gemini-3-pro-preview' | 'gemini-3-flash-preview';
+type SupportedModel = 'gemini-3.1-pro-preview' | 'gemini-3-flash-preview';
 
 // Parameter interface
 export interface BrainstormParams {
@@ -289,8 +289,8 @@ export async function handleBrainstorm(
       projectContext || undefined
     );
 
-    // v1.2.0: Use user-selected model (default: gemini-3-pro-preview)
-    const modelToUse = params.model || 'gemini-3-pro-preview';
+    // v1.2.0: Use user-selected model (default: gemini-3.1-pro-preview)
+    const modelToUse = params.model || 'gemini-3.1-pro-preview';
     client.setModel(modelToUse);
 
     // Call Gemini API

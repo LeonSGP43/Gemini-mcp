@@ -44,7 +44,7 @@ Output format:
 - Use professional terminology`;
 
 // Supported model types
-type SupportedModel = 'gemini-3-pro-preview' | 'gemini-3-flash-preview';
+type SupportedModel = 'gemini-3.1-pro-preview' | 'gemini-3-flash-preview';
 
 export interface MultimodalQueryParams {
   prompt: string;
@@ -96,8 +96,8 @@ export async function handleMultimodalQuery(
       fullPrompt += `\n\nPlease provide your response as code only, no explanations.`;
     }
 
-    // v1.2.0: Use user-selected model (default: gemini-3-pro-preview)
-    const modelToUse = params.model || 'gemini-3-pro-preview';
+    // v1.2.0: Use user-selected model (default: gemini-3.1-pro-preview)
+    const modelToUse = params.model || 'gemini-3.1-pro-preview';
     client.setModel(modelToUse);
 
     // Call Gemini API with multimodal input

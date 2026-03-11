@@ -61,7 +61,7 @@ When analyzing data:
 - Explain relationships`;
 
 // Supported model types
-type SupportedModel = 'gemini-3-pro-preview' | 'gemini-3-flash-preview';
+type SupportedModel = 'gemini-3.1-pro-preview' | 'gemini-3-flash-preview';
 
 // Parameter interface
 export interface AnalyzeContentParams {
@@ -339,8 +339,8 @@ export async function handleAnalyzeContent(
 
     const prompt = buildAnalysisPrompt(promptParams, detectedType, task, outputFormat, contentToAnalyze);
 
-    // v1.2.0: Use user-selected model (default: gemini-3-pro-preview)
-    const modelToUse = params.model || 'gemini-3-pro-preview';
+    // v1.2.0: Use user-selected model (default: gemini-3.1-pro-preview)
+    const modelToUse = params.model || 'gemini-3.1-pro-preview';
     client.setModel(modelToUse);
 
     // Call Gemini API

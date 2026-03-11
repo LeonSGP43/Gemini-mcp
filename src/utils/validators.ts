@@ -163,7 +163,7 @@ export function validateBrainstormStyle(value: string): void {
 export function validateModel(modelId: string): void {
   if (!isModelSupported(modelId)) {
     throw new Error(
-      `Model "${modelId}" is not supported. Use one of: gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-lite`
+      `Model "${modelId}" is not supported. Use one of: gemini-3.1-pro-preview, gemini-3-flash-preview, gemini-2.5-pro`
     );
   }
 }

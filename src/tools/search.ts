@@ -20,7 +20,7 @@ When answering questions:
 5. Synthesize information from multiple sources when relevant`;
 
 // Supported model types
-type SupportedModel = 'gemini-3-pro-preview' | 'gemini-3-flash-preview';
+type SupportedModel = 'gemini-3.1-pro-preview' | 'gemini-3-flash-preview';
 
 // Parameter interface
 export interface SearchParams {

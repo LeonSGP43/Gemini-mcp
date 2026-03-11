@@ -58,10 +58,10 @@ export interface ModelConfig {
  * Curated 3 models focused on UI generation and frontend development
  */
 export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
-  'gemini-3-pro-preview': {
-    id: 'gemini-3-pro-preview',
-    name: 'Gemini 3.0 Pro Preview',
-    description: 'Latest and most powerful model, #1 on WebDev Arena for UI generation',
+  'gemini-3.1-pro-preview': {
+    id: 'gemini-3.1-pro-preview',
+    name: 'Gemini 3.1 Pro Preview',
+    description: 'Current flagship preview model for deep reasoning, coding, and multimodal work',
     contextWindow: 1_048_576, // 1M tokens
     outputLimit: 65_536,
     capabilities: {
@@ -77,7 +77,7 @@ export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
     bestFor: ['UI generation', 'Frontend development', 'Design to code', 'Interactive animations', 'Complex reasoning'],
     useCases: ['UI generation', 'Frontend development', 'Design to code', 'Interactive animations', 'Complex reasoning'],
     thinking: true,
-    lastUpdate: 'January 2026',
+    lastUpdate: 'March 2026',
     isDefault: true
   },
   'gemini-3-flash-preview': {
@@ -130,7 +130,7 @@ export const SUPPORTED_MODELS: Record<string, ModelConfig> = {
  * Get default model
  */
 export function getDefaultModel(): ModelConfig {
-  return SUPPORTED_MODELS['gemini-3-pro-preview'];
+  return SUPPORTED_MODELS['gemini-3.1-pro-preview'];
 }
 
 /**
@@ -166,9 +166,9 @@ export function getAllModels(): ModelConfig[] {
  * Model selection recommendations
  */
 export const MODEL_RECOMMENDATIONS = {
-  ui_generation: 'gemini-3-pro-preview',
-  animation: 'gemini-3-pro-preview',
-  multimodal: 'gemini-3-pro-preview',
+  ui_generation: 'gemini-3.1-pro-preview',
+  animation: 'gemini-3.1-pro-preview',
+  multimodal: 'gemini-3.1-pro-preview',
   codebase_analysis: 'gemini-2.5-pro',
   batch_processing: 'gemini-3-flash-preview',
   quick_tasks: 'gemini-3-flash-preview',

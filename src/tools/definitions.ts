@@ -2,8 +2,8 @@
  * MCP Tool Definitions
  * Tool schemas compliant with MCP protocol
  *
- * v1.2.0 Updates:
- * - Streamlined to 5 core tools
+ * v1.2.5 Updates:
+ * - Expanded to 6 core tools (added video analysis)
  * - Added model parameter to all tools
  */
 
@@ -12,14 +12,14 @@ import { TOOL_NAMES } from '../config/constants.js';
 // Model parameter definition (shared by most tools, default: Pro)
 const MODEL_PARAMETER = {
   type: 'string',
-  enum: ['gemini-3-pro-preview', 'gemini-3-flash-preview'],
-  description: 'Gemini model to use (optional, default: gemini-3-pro-preview)'
+  enum: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'],
+  description: 'Gemini model to use (optional, default: gemini-3.1-pro-preview)'
 };
 
 // Search tool model parameter (default: Flash, faster response with comparable quality)
 const SEARCH_MODEL_PARAMETER = {
   type: 'string',
-  enum: ['gemini-3-pro-preview', 'gemini-3-flash-preview'],
+  enum: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'],
   description: 'Gemini model to use (optional, default: gemini-3-flash-preview for faster search)'
 };
 
@@ -59,7 +59,90 @@ export const TOOL_DEFINITIONS = [
     }
   },
 
-  // 📄 Tool 2: gemini_analyze_content
+  // 🎬 Tool 2: gemini_video_analyze
+  {
+    name: TOOL_NAMES.VIDEO_ANALYZE,
+    description: `Analyze videos with Gemini multimodal understanding.
+
+Supported video inputs:
+- Local file paths (uploaded via Gemini Files API, with processing polling)
+- Base64 data URI videos (data:video/*;base64,...)
+- YouTube URLs (direct fileData URI)
+
+Best for:
+- Scene and timeline understanding
+- User behavior analysis in recordings
+- UI flow and demo walkthrough analysis
+- Event extraction and structured summaries`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        prompt: {
+          type: 'string',
+          description: 'Question or instruction about the videos'
+        },
+        videos: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Videos as local file paths, Base64 data URIs (data:video/*;base64,...), or YouTube URLs.'
+        },
+        context: {
+          type: 'string',
+          description: 'Optional: Additional context for better understanding'
+        },
+        outputFormat: {
+          type: 'string',
+          enum: ['text', 'json', 'markdown'],
+          description: 'Desired output format (default: text)',
+          default: 'text'
+        },
+        thinkingLevel: {
+          type: 'string',
+          enum: ['low', 'high'],
+          description: 'Thinking depth: low for speed, high for complex video reasoning (default: high)',
+          default: 'high'
+        },
+        mediaResolution: {
+          type: 'string',
+          enum: [
+            'MEDIA_RESOLUTION_UNSPECIFIED',
+            'MEDIA_RESOLUTION_LOW',
+            'MEDIA_RESOLUTION_MEDIUM',
+            'MEDIA_RESOLUTION_HIGH'
+          ],
+          description: 'Optional media resolution hint for video understanding (Gemini API).'
+        },
+        fps: {
+          type: 'number',
+          description: 'Optional video sampling fps in (0, 24], e.g. 1 or 2'
+        },
+        startOffset: {
+          type: 'string',
+          description: 'Optional start offset in Duration format, e.g. "10s" or "10.5s"'
+        },
+        endOffset: {
+          type: 'string',
+          description: 'Optional end offset in Duration format, e.g. "45s" or "45.25s"'
+        },
+        pollIntervalMs: {
+          type: 'number',
+          description: 'Polling interval (ms) when waiting local uploaded videos to become ACTIVE (default: 5000)'
+        },
+        maxPollAttempts: {
+          type: 'number',
+          description: 'Maximum polling attempts for local video processing (default: 60)'
+        },
+        deleteUploadedFiles: {
+          type: 'boolean',
+          description: 'Whether to delete uploaded local video files from Gemini Files API after request (default: false)'
+        },
+        model: MODEL_PARAMETER
+      },
+      required: ['prompt', 'videos']
+    }
+  },
+
+  // 📄 Tool 3: gemini_analyze_content
   {
     name: TOOL_NAMES.ANALYZE_CONTENT,
     description: `Analyze code, documents, or data. Supports file path or direct content input. Provides summarization, code review, explanation, optimization, and debugging. Auto-detects content type and programming language.
@@ -111,7 +194,7 @@ TIP: This tool supports PARALLEL calls - analyze multiple files simultaneously f
     }
   },
 
-  // 📦 Tool 3: gemini_analyze_codebase
+  // 📦 Tool 4: gemini_analyze_codebase
   {
     name: TOOL_NAMES.ANALYZE_CODEBASE,
     description: 'Analyze entire codebase using 1M token context. Supports directory path, file paths, or file contents. Provides architecture overview, identifies patterns, security issues, performance bottlenecks, and dependency problems.',
@@ -180,7 +263,7 @@ TIP: This tool supports PARALLEL calls - analyze multiple files simultaneously f
     }
   },
 
-  // 💡 Tool 4: gemini_brainstorm
+  // 💡 Tool 5: gemini_brainstorm
   {
     name: TOOL_NAMES.BRAINSTORM,
     description: 'Generate creative ideas and solutions. Provides multiple ideas with pros/cons and feasibility assessment. Supports reading project context files to generate ideas that fit your project.',
@@ -222,7 +305,7 @@ TIP: This tool supports PARALLEL calls - analyze multiple files simultaneously f
     }
   },
 
-  // 🔍 Tool 5: gemini_search
+  // 🔍 Tool 6: gemini_search
   {
     name: TOOL_NAMES.SEARCH,
     description: `Search the web using Gemini's built-in Google Search grounding.

@@ -43,8 +43,8 @@
 
 | 模型 ID | 名称 | 特点 |
 |---------|------|------|
-| `gemini-3-pro-preview` | Gemini 3.0 Pro | **默认**，最强推理能力，100万上下文 |
-| `gemini-3-flash-preview` | Gemini 3.0 Flash | 快速响应，适合简单任务 |
+| `gemini-3.1-pro-preview` | Gemini 3.1 Pro | **默认**，最强推理能力，100万上下文 |
+| `gemini-3-flash-preview` | Gemini 3 Flash Preview | 快速响应，适合简单任务 |
 
 ### 2.2 model 参数定义
 
@@ -52,8 +52,8 @@
 {
   model: {
     type: 'string',
-    enum: ['gemini-3-pro-preview', 'gemini-3-flash-preview'],
-    description: '使用的 Gemini 模型 (可选，默认: gemini-3-pro-preview)'
+    enum: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'],
+    description: '使用的 Gemini 模型 (可选，默认: gemini-3.1-pro-preview)'
   }
 }
 ```
@@ -166,7 +166,7 @@
   "arguments": {
     "directory": "./src",
     "focus": "architecture",
-    "model": "gemini-3-pro-preview"
+    "model": "gemini-3.1-pro-preview"
   }
 }
 ```

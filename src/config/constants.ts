@@ -9,7 +9,7 @@ export const MCP_VERSION = '2024-11-05';
 export const SERVER_INFO = {
   name: 'mcp-server-gemini',
   version: '1.2.4',
-  description: `Gemini AI MCP Server with 5 core tools.
+  description: `Gemini AI MCP Server with 6 core tools.
 IMPORTANT: All tools support PARALLEL execution - call multiple tools simultaneously for better performance.
 Example: analyze multiple files or search multiple queries in parallel.`,
   author: 'LKbaba',
@@ -24,9 +24,10 @@ export const API_CONFIG = {
   maxImageSize: 10 * 1024 * 1024, // 10MB
 };
 
-// Tool names - v1.2.0 streamlined to 5 core tools
+// Tool names - v1.2.5: expanded to 6 core tools
 export const TOOL_NAMES = {
   MULTIMODAL_QUERY: 'gemini_multimodal_query',
+  VIDEO_ANALYZE: 'gemini_video_analyze',
   ANALYZE_CONTENT: 'gemini_analyze_content',
   ANALYZE_CODEBASE: 'gemini_analyze_codebase',
   BRAINSTORM: 'gemini_brainstorm',

@@ -18,4 +18,4 @@ startCommand:
   commandFunction:
     # A function that produces the CLI command to start the MCP on stdio.
     |-
-    config => ({command: 'node', args: ['dist/index.js'], env: {GEMINI_API_KEY: config.geminiApiKey, PORT: config.port.toString()}})
+    config => ({command: 'node', args: ['dist/server.js'], env: {GEMINI_API_KEY: config.geminiApiKey, PORT: config.port.toString()}})

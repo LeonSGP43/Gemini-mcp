@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Updated current documentation and examples to use `gemini-3.1-pro-preview` as the default Pro model
+- Standardized current docs/readme wording to "Gemini 3.1 Pro" where describing the active default model
+
+### Notes
+
+- Older changelog entries below remain historical release notes and may reference the model names that were current at that time
+
 ## [1.1.0] - 2025-11-26
 
 ### 🚀 File System Access & Tool Enhancement
