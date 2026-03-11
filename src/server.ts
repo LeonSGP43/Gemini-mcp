@@ -36,11 +36,6 @@ async function setupProxy(): Promise<void> {
 // Initialize proxy before anything else
 await setupProxy();
 
-// Increase stdin buffer size (for large images)
-if (process.stdin.setEncoding) {
-  process.stdin.setEncoding('utf8');
-}
-
 // Global state
 let isInitialized = false;
 let isShuttingDown = false;
@@ -50,7 +45,11 @@ let hasExited = false;
 let pendingResponseWrites = 0;
 let stdinEnded = false;
 let forceExitTimer: NodeJS.Timeout | null = null;
-let buffer = '';
+let buffer = Buffer.alloc(0);
+let transportMode: 'unknown' | 'line' | 'framed' = 'unknown';
+
+const FRAME_HEADER_SEPARATOR = Buffer.from('\r\n\r\n');
+const FRAME_HEADER_SEPARATOR_LF = Buffer.from('\n\n');
 
 type RequestId = string | number | null | undefined;
 
@@ -58,8 +57,16 @@ type RequestId = string | number | null | undefined;
  * Send response to stdout
  */
 function sendResponse(response: MCPResponse): void {
+  const responsePayload = Buffer.from(JSON.stringify(response), 'utf8');
+  const outputBuffer = transportMode === 'framed'
+    ? Buffer.concat([
+        Buffer.from(`Content-Length: ${responsePayload.length}\r\n\r\n`, 'utf8'),
+        responsePayload
+      ])
+    : Buffer.concat([responsePayload, Buffer.from('\n', 'utf8')]);
+
   pendingResponseWrites += 1;
-  process.stdout.write(`${JSON.stringify(response)}\n`, () => {
+  process.stdout.write(outputBuffer, () => {
     pendingResponseWrites = Math.max(0, pendingResponseWrites - 1);
     maybeExit();
   });
@@ -268,11 +275,11 @@ function requestGracefulExit(forceAfterMs?: number): void {
 /**
  * Try to parse Content-Length framed message from buffer
  */
-function parseContentLengthMessage(buffer: string): { body: string; rest: string } | null {
-  let headerEnd = buffer.indexOf('\r\n\r\n');
+function findFrameHeaderEnd(input: Buffer): { headerEnd: number; separatorLength: number } | null {
+  let headerEnd = input.indexOf(FRAME_HEADER_SEPARATOR);
   let separatorLength = 4;
 
-  const lfHeaderEnd = buffer.indexOf('\n\n');
+  const lfHeaderEnd = input.indexOf(FRAME_HEADER_SEPARATOR_LF);
   if (lfHeaderEnd !== -1 && (headerEnd === -1 || lfHeaderEnd < headerEnd)) {
     headerEnd = lfHeaderEnd;
     separatorLength = 2;
@@ -282,7 +289,17 @@ function parseContentLengthMessage(buffer: string): { body: string; rest: string
     return null;
   }
 
-  const header = buffer.slice(0, headerEnd);
+  return { headerEnd, separatorLength };
+}
+
+function parseContentLengthMessage(input: Buffer): { body: Buffer; rest: Buffer } | null {
+  const headerInfo = findFrameHeaderEnd(input);
+  if (!headerInfo) {
+    return null;
+  }
+
+  const { headerEnd, separatorLength } = headerInfo;
+  const header = input.subarray(0, headerEnd).toString('utf8');
 
   // Not a framed message, let line parser handle it
   if (!/content-length\s*:/i.test(header)) {
@@ -298,29 +315,44 @@ function parseContentLengthMessage(buffer: string): { body: string; rest: string
   const bodyStart = headerEnd + separatorLength;
   const bodyEnd = bodyStart + contentLength;
 
-  if (buffer.length < bodyEnd) {
+  if (input.length < bodyEnd) {
     return null;
   }
 
   return {
-    body: buffer.slice(bodyStart, bodyEnd),
-    rest: buffer.slice(bodyEnd)
+    body: input.subarray(bodyStart, bodyEnd),
+    rest: input.subarray(bodyEnd)
   };
 }
 
 /**
  * Whether current buffer starts with Content-Length framed transport
  */
-function looksLikeContentLengthFrame(buffer: string): boolean {
-  const trimmed = buffer.trimStart();
-  return /^content-length\s*:/i.test(trimmed);
+function looksLikeContentLengthFrame(input: Buffer): boolean {
+  let start = 0;
+  while (start < input.length) {
+    const byte = input[start];
+    if (byte === 0x20 || byte === 0x09 || byte === 0x0d || byte === 0x0a) {
+      start += 1;
+      continue;
+    }
+    break;
+  }
+
+  if (start >= input.length) {
+    return false;
+  }
+
+  const preview = input.subarray(start, Math.min(input.length, start + 32)).toString('ascii');
+  return /^content-length\s*:/i.test(preview);
 }
 
 /**
  * Process a raw JSON message
  */
-async function processRawMessage(raw: string): Promise<void> {
-  const payload = raw.trim();
+async function processRawMessage(raw: Buffer | string): Promise<void> {
+  const rawText = Buffer.isBuffer(raw) ? raw.toString('utf8') : raw;
+  const payload = rawText.trim();
   if (!payload) {
     return;
   }
@@ -419,6 +451,10 @@ function main(): void {
     try {
       while (buffer.length > 0) {
         if (looksLikeContentLengthFrame(buffer)) {
+          if (transportMode === 'unknown') {
+            transportMode = 'framed';
+          }
+
           const framedMessage = parseContentLengthMessage(buffer);
 
           if (!framedMessage) {
@@ -434,25 +470,33 @@ function main(): void {
           continue;
         }
 
-        const newlineIndex = buffer.indexOf('\n');
+        const newlineIndex = buffer.indexOf(0x0a);
         if (newlineIndex === -1) {
           if (!stdinEnded) {
             break;
           }
 
           const finalLine = buffer;
-          buffer = '';
+          if (transportMode === 'unknown') {
+            transportMode = 'line';
+          }
+
+          buffer = Buffer.alloc(0);
           await processRawMessage(finalLine);
           continue;
         }
 
-        const line = buffer.slice(0, newlineIndex);
-        buffer = buffer.slice(newlineIndex + 1);
+        if (transportMode === 'unknown') {
+          transportMode = 'line';
+        }
+
+        const line = buffer.subarray(0, newlineIndex);
+        buffer = buffer.subarray(newlineIndex + 1);
         await processRawMessage(line);
       }
     } catch (error) {
       console.error('Request handling error:', error);
-      buffer = '';
+      buffer = Buffer.alloc(0);
       sendError(null, ERROR_CODES.PARSE_ERROR, 'Invalid JSON-RPC request');
     } finally {
       isDrainingBuffer = false;
@@ -475,7 +519,8 @@ function main(): void {
   }
 
   process.stdin.on('data', (chunk: string | Buffer) => {
-    buffer += chunk.toString();
+    const chunkBuffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, 'utf8');
+    buffer = buffer.length === 0 ? chunkBuffer : Buffer.concat([buffer, chunkBuffer]);
     scheduleDrain();
   });
 
