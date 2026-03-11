@@ -35,11 +35,22 @@ if (process.stdin.setEncoding) {
 // Global state
 let isInitialized = false;
 let isShuttingDown = false;
+let isDrainingBuffer = false;
+let shouldExitWhenIdle = false;
+let hasExited = false;
+let pendingResponseWrites = 0;
+let stdinEnded = false;
+let forceExitTimer = null;
+let buffer = '';
 /**
  * Send response to stdout
  */
 function sendResponse(response) {
-    console.log(JSON.stringify(response));
+    pendingResponseWrites += 1;
+    process.stdout.write(`${JSON.stringify(response)}\n`, () => {
+        pendingResponseWrites = Math.max(0, pendingResponseWrites - 1);
+        maybeExit();
+    });
 }
 /**
  * Send error response
@@ -173,7 +184,38 @@ function handleShutdown(request) {
  * Handle exit notification
  */
 function handleExit() {
+    requestGracefulExit();
+}
+function maybeExit() {
+    if (hasExited || !shouldExitWhenIdle) {
+        return;
+    }
+    if (isDrainingBuffer || pendingResponseWrites > 0) {
+        return;
+    }
+    if (buffer.length > 0) {
+        return;
+    }
+    hasExited = true;
+    if (forceExitTimer) {
+        clearTimeout(forceExitTimer);
+        forceExitTimer = null;
+    }
     process.exit(0);
+}
+function requestGracefulExit(forceAfterMs) {
+    shouldExitWhenIdle = true;
+    isShuttingDown = true;
+    if (forceAfterMs && !forceExitTimer) {
+        forceExitTimer = setTimeout(() => {
+            if (!hasExited) {
+                hasExited = true;
+                process.exit(0);
+            }
+        }, forceAfterMs);
+        forceExitTimer.unref();
+    }
+    maybeExit();
 }
 /**
  * Try to parse Content-Length framed message from buffer
@@ -289,15 +331,20 @@ function main() {
     console.error('Waiting for requests...');
     console.error('');
     // Read stdin as stream; supports both Content-Length framed and line-delimited JSON
-    let buffer = '';
-    process.stdin.on('data', async (chunk) => {
-        buffer += chunk.toString();
-        while (buffer.length > 0) {
-            try {
+    let processingQueue = Promise.resolve();
+    async function drainBuffer() {
+        if (isDrainingBuffer) {
+            return;
+        }
+        isDrainingBuffer = true;
+        try {
+            while (buffer.length > 0) {
                 if (looksLikeContentLengthFrame(buffer)) {
                     const framedMessage = parseContentLengthMessage(buffer);
                     if (!framedMessage) {
-                        // Wait for more frame data
+                        if (stdinEnded) {
+                            throw new Error('Incomplete Content-Length framed message at EOF');
+                        }
                         break;
                     }
                     buffer = framedMessage.rest;
@@ -306,32 +353,62 @@ function main() {
                 }
                 const newlineIndex = buffer.indexOf('\n');
                 if (newlineIndex === -1) {
-                    break;
+                    if (!stdinEnded) {
+                        break;
+                    }
+                    const finalLine = buffer;
+                    buffer = '';
+                    await processRawMessage(finalLine);
+                    continue;
                 }
                 const line = buffer.slice(0, newlineIndex);
                 buffer = buffer.slice(newlineIndex + 1);
                 await processRawMessage(line);
             }
-            catch (error) {
-                console.error('Request handling error:', error);
-                sendError(null, ERROR_CODES.PARSE_ERROR, 'Invalid JSON-RPC request');
-            }
         }
+        catch (error) {
+            console.error('Request handling error:', error);
+            buffer = '';
+            sendError(null, ERROR_CODES.PARSE_ERROR, 'Invalid JSON-RPC request');
+        }
+        finally {
+            isDrainingBuffer = false;
+            maybeExit();
+        }
+    }
+    function scheduleDrain() {
+        processingQueue = processingQueue
+            .then(async () => {
+            await drainBuffer();
+        })
+            .catch((error) => {
+            console.error('Buffer drain error:', error);
+            sendError(null, ERROR_CODES.PARSE_ERROR, 'Invalid JSON-RPC request');
+        })
+            .finally(() => {
+            maybeExit();
+        });
+    }
+    process.stdin.on('data', (chunk) => {
+        buffer += chunk.toString();
+        scheduleDrain();
     });
     process.stdin.on('end', () => {
+        stdinEnded = true;
         console.error('Connection closed');
-        process.exit(0);
+        scheduleDrain();
+        requestGracefulExit();
     });
     // Handle process signals
     process.on('SIGINT', () => {
         if (!isShuttingDown) {
             console.error('\nShutting down...');
         }
-        process.exit(0);
+        requestGracefulExit(1000);
     });
     process.on('SIGTERM', () => {
         console.error('\nShutting down...');
-        process.exit(0);
+        requestGracefulExit(1000);
     });
 }
 // Start server
