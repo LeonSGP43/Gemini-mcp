@@ -1,211 +1,191 @@
-# Gemini MCP v1.2.0 更新 PRD
+# Gemini MCP 双助手 PRD
 
-## 版本信息
-- **当前版本**: v1.1.1
-- **目标版本**: v1.2.0
-- **更新日期**: 2026-01-27
-- **作者**: LKbaba
+## 目标
 
----
+把当前 Gemini MCP 收敛成两个对 Codex 友好的高频工具：
 
-## 1. 更新概述
+- `gemini_brainstorm_assist`
+- `gemini_acceptance_assist`
 
-本次更新主要目标：**精简工具、增加模型选择灵活性**
+重点不是“能力越多越好”，而是：
 
-### 1.1 删除的工具（4个）
+- 工具选择稳定
+- 输入参数低心智负担
+- 输出结构足够稳定，方便 Codex 消费
+- 默认模型和默认行为偏高性能
 
-| 工具名 | 删除原因 |
-|--------|---------|
-| `list_models` | 模型列表固定，无需动态查询 |
-| `create_animation` | 功能与其他工具重叠 |
-| `fix_ui_from_screenshot` | 使用率低，精简工具集 |
-| `generate_ui` | 使用率低，精简工具集 |
+## 产品原则
 
-### 1.2 保留的工具（4个）
+1. 公开 MCP 面尽量小。
+2. 通用能力优先做内部实现，不急着暴露成公共 tool。
+3. 输出必须结构化，便于代理消费。
+4. 默认参数应服务 Codex 常见工作流，而不是暴露 Gemini 全量原语。
 
-| 工具名 | 功能 |
-|--------|------|
-| `gemini_multimodal_query` | 多模态查询（图片+文本） |
-| `gemini_analyze_content` | 内容分析（代码/文档/数据） |
-| `gemini_analyze_codebase` | 代码库分析（100万上下文） |
-| `gemini_brainstorm` | 创意头脑风暴 |
-| `gemini_search` | Google 搜索（实时信息） |
+## 公开工具
 
-### 1.3 新增功能
+### 1. `gemini_brainstorm_assist`
 
-**所有工具新增 `model` 参数**，允许用户选择使用的模型。
+用途：
 
----
+- 架构选型
+- 功能方向讨论
+- 实现方案对比
+- 下一步执行建议
 
-## 2. 模型配置
-
-### 2.1 支持的模型（2个）
-
-| 模型 ID | 名称 | 特点 |
-|---------|------|------|
-| `gemini-3.1-pro-preview` | Gemini 3.1 Pro | **默认**，最强推理能力，100万上下文 |
-| `gemini-3-flash-preview` | Gemini 3 Flash Preview | 快速响应，适合简单任务 |
-
-### 2.2 model 参数定义
+输入：
 
 ```typescript
 {
-  model: {
-    type: 'string',
-    enum: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'],
-    description: '使用的 Gemini 模型 (可选，默认: gemini-3.1-pro-preview)'
-  }
+  topic: string
+  goal?: string
+  context?: string
+  contextFilePath?: string
+  contextFiles?: string[]
+  constraints?: string[]
+  count?: number
+  mode?: 'explore' | 'refine' | 'ship'
+  model?: 'gemini-3.1-pro-preview' | 'gemini-3-flash-preview'
 }
 ```
 
----
-
-## 3. 工具参数更新
-
-### 3.1 gemini_multimodal_query
+输出：
 
 ```typescript
 {
-  prompt: string,           // 必填：问题或指令
-  images: string[],         // 必填：图片路径或 Base64
-  outputFormat?: string,    // 可选：text | code | json
-  context?: string,         // 可选：额外上下文
-  model?: string            // 新增：模型选择
+  topic: string
+  mode: 'explore' | 'refine' | 'ship'
+  summary: string
+  recommendedDirection: string
+  ideas: Array<{
+    title: string
+    rationale: string
+    benefits: string[]
+    risks: string[]
+    implementationOutline: string[]
+  }>
+  nextSteps: string[]
 }
 ```
 
-### 3.2 gemini_analyze_content
+默认模型：
+
+- `gemini-3-flash-preview`
+
+原因：
+
+- 头脑风暴更需要交互速度
+- 大多数场景不需要一上来就走最重模型
+
+### 2. `gemini_acceptance_assist`
+
+用途：
+
+- 文件验收
+- 代码改动 review
+- 对照明确标准做 pass / fail 判断
+- 输出阻塞问题与覆盖缺口
+
+输入：
 
 ```typescript
 {
-  content?: string,         // 内容（与 filePath 二选一）
-  filePath?: string,        // 文件路径（与 content 二选一）
-  type?: string,            // 可选：code | document | data | auto
-  task?: string,            // 可选：summarize | review | explain | optimize | debug
-  language?: string,        // 可选：编程语言
-  focus?: string[],         // 可选：关注点
-  outputFormat?: string,    // 可选：text | json | markdown
-  model?: string            // 新增：模型选择
+  acceptanceCriteria: string
+  context?: string
+  filePath?: string
+  content?: string
+  directory?: string
+  filePaths?: string[]
+  files?: Array<{ path: string; content: string }>
+  include?: string[]
+  exclude?: string[]
+  focus?: Array<
+    'correctness' |
+    'behavior' |
+    'security' |
+    'performance' |
+    'tests' |
+    'maintainability'
+  >
+  strictness?: 'standard' | 'strict'
+  model?: 'gemini-3.1-pro-preview' | 'gemini-3-flash-preview'
 }
 ```
 
-### 3.3 gemini_analyze_codebase
+要求：
+
+- 一次只能提供一种输入源
+- 输出必须区分 `blockingFindings` 与 `nonBlockingFindings`
+
+输出：
 
 ```typescript
 {
-  directory?: string,       // 目录路径（三种输入方式之一）
-  filePaths?: string[],     // 文件路径列表（三种输入方式之一）
-  files?: object[],         // 文件内容数组（三种输入方式之一）
-  include?: string[],       // 可选：包含的 glob 模式
-  exclude?: string[],       // 可选：排除的 glob 模式
-  focus?: string,           // 可选：architecture | security | performance | dependencies | patterns
-  outputFormat?: string,    // 可选：markdown | json
-  model?: string            // 新增：模型选择
+  verdict: 'pass' | 'needs_work' | 'fail'
+  summary: string
+  blockingFindings: Array<{
+    title: string
+    severity: 'high' | 'medium' | 'low'
+    description: string
+    location?: string
+    suggestion?: string
+  }>
+  nonBlockingFindings: Array<{
+    title: string
+    severity: 'high' | 'medium' | 'low'
+    description: string
+    location?: string
+    suggestion?: string
+  }>
+  coverageGaps: string[]
+  recommendedNextSteps: string[]
 }
 ```
 
-### 3.4 gemini_brainstorm
+默认模型：
 
-```typescript
-{
-  topic: string,            // 必填：主题
-  context?: string,         // 可选：额外上下文
-  contextFilePath?: string, // 可选：上下文文件路径
-  contextFiles?: string[],  // 可选：多个上下文文件
-  count?: number,           // 可选：生成数量，默认 5
-  style?: string,           // 可选：innovative | practical | radical
-  model?: string            // 新增：模型选择
-}
-```
+- `gemini-3.1-pro-preview`
 
-### 3.5 gemini_search
+原因：
 
-```typescript
-{
-  query: string,            // 必填：搜索查询
-  context?: string,         // 可选：额外上下文
-  outputFormat?: string,    // 可选：text | json
-  model?: string            // 新增：模型选择
-}
-```
+- 验收更强调判断质量
+- 对 blocking issue 的误判成本更高
 
----
+## 不再作为公共工具暴露的能力
 
-## 4. 使用示例
+以下能力可以保留在代码库中作为内部实现，但不再建议作为公共 MCP tool 暴露：
 
-### 4.1 使用默认模型
+- `gemini_multimodal_query`
+- `gemini_video_analyze`
+- `gemini_analyze_content`
+- `gemini_analyze_codebase`
+- `gemini_brainstorm`
+- `gemini_search`
 
-```json
-{
-  "name": "gemini_analyze_content",
-  "arguments": {
-    "filePath": "./src/index.ts",
-    "task": "review"
-  }
-}
-```
+原因：
 
-### 4.2 指定使用 Flash 模型（更快）
+- 与新双助手存在明显能力重叠
+- 增加 Codex 的工具选择歧义
+- 扩大文档、测试、schema、运行时 contract 的维护成本
 
-```json
-{
-  "name": "gemini_analyze_content",
-  "arguments": {
-    "filePath": "./src/index.ts",
-    "task": "review",
-    "model": "gemini-3-flash-preview"
-  }
-}
-```
+## 性能策略
 
-### 4.3 复杂任务使用 Pro 模型
+### Brainstorm
 
-```json
-{
-  "name": "gemini_analyze_codebase",
-  "arguments": {
-    "directory": "./src",
-    "focus": "architecture",
-    "model": "gemini-3.1-pro-preview"
-  }
-}
-```
+- 默认走 Flash
+- 输入上下文总量做限制
+- 输出保持结构化，减少二次整理成本
 
----
+### Acceptance
 
-## 5. 技术实现
+- 默认走 Pro
+- 限制单次文件数和总字节数
+- 对代码库场景要求更高推理深度
 
-### 5.1 需要修改的文件
+## 工程要求
 
-| 文件 | 修改内容 |
-|------|---------|
-| `src/config/constants.ts` | 删除已移除工具的常量 |
-| `src/tools/definitions.ts` | 删除工具定义，添加 model 参数 |
-| `src/tools/index.ts` | 删除导出 |
-| `src/server.ts` | 删除工具路由 |
-| `src/tools/*.ts` | 各工具支持 model 参数 |
-
-### 5.2 需要删除的文件
-
-| 文件 | 说明 |
-|------|------|
-| `src/tools/list-models.ts` | list_models 工具 |
-| `src/tools/generate-ui.ts` | generate_ui 工具 |
-| `src/tools/fix-ui.ts` | fix_ui_from_screenshot 工具 |
-
----
-
-## 6. 兼容性
-
-- **向后兼容**: `model` 参数可选，默认行为不变
-- **Breaking Change**: 删除的 4 个工具不再可用
-
----
-
-## 7. 测试清单
-
-- [ ] 删除的工具调用返回正确错误
-- [ ] 保留的 5 个工具正常工作
-- [ ] model 参数为空时使用默认模型
-- [ ] model 参数指定 flash 时使用 flash 模型
-- [ ] 无效 model 值返回错误
+1. `tools/list` 只返回两个公开工具。
+2. README 与 PRD 只描述这两个公开工具。
+3. 旧工具源文件可以保留，但不能继续出现在公共 schema 里。
+4. 默认行为必须有明确偏向：
+   - brainstorm 偏速度
+   - acceptance 偏判断质量

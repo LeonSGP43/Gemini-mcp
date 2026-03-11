@@ -1,343 +1,150 @@
 /**
  * MCP Tool Definitions
- * Tool schemas compliant with MCP protocol
- *
- * v1.2.5 Updates:
- * - Expanded to 6 core tools (added video analysis)
- * - Added model parameter to all tools
+ * Streamlined public tool surface for Codex-oriented Gemini assistants.
  */
 import { TOOL_NAMES } from '../config/constants.js';
-// Model parameter definition (shared by most tools, default: Pro)
-const MODEL_PARAMETER = {
+import { PUBLIC_TOOL_MODELS } from '../config/models.js';
+const PRO_DEFAULT_MODEL_PARAMETER = {
     type: 'string',
-    enum: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'],
+    enum: [...PUBLIC_TOOL_MODELS],
     description: 'Gemini model to use (optional, default: gemini-3.1-pro-preview)'
 };
-// Search tool model parameter (default: Flash, faster response with comparable quality)
-const SEARCH_MODEL_PARAMETER = {
+const FLASH_DEFAULT_MODEL_PARAMETER = {
     type: 'string',
-    enum: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'],
-    description: 'Gemini model to use (optional, default: gemini-3-flash-preview for faster search)'
+    enum: [...PUBLIC_TOOL_MODELS],
+    description: 'Gemini model to use (optional, default: gemini-3-flash-preview for faster ideation)'
 };
-/**
- * All tool definitions
- */
 export const TOOL_DEFINITIONS = [
-    // 🖼️ Tool 1: gemini_multimodal_query
     {
-        name: TOOL_NAMES.MULTIMODAL_QUERY,
-        description: 'Query using images + text for multimodal understanding. Analyze designs, diagrams, screenshots, or any visual content with natural language questions.',
+        name: TOOL_NAMES.BRAINSTORM_ASSIST,
+        description: 'High-signal Gemini ideation copilot for Codex. Generates concrete options, tradeoffs, and next steps from a topic plus optional repository context.',
         inputSchema: {
             type: 'object',
+            additionalProperties: false,
             properties: {
-                prompt: {
+                topic: {
                     type: 'string',
-                    description: 'Question or instruction about the images'
+                    description: 'Decision, feature area, or problem to explore.'
                 },
-                images: {
-                    type: 'array',
-                    items: { type: 'string' },
-                    description: 'Images as file paths (e.g., ./images/screenshot.png) or Base64 data URIs. File paths will be automatically converted to Base64.'
-                },
-                outputFormat: {
+                goal: {
                     type: 'string',
-                    enum: ['text', 'code', 'json'],
-                    description: 'Desired output format (default: text)',
-                    default: 'text'
+                    description: 'Optional desired outcome, e.g. choose an architecture or generate implementation directions.'
                 },
                 context: {
                     type: 'string',
-                    description: 'Optional: Additional context for better understanding'
+                    description: 'Optional extra context, current state, or background.'
                 },
-                model: MODEL_PARAMETER
-            },
-            required: ['prompt', 'images']
-        }
-    },
-    // 🎬 Tool 2: gemini_video_analyze
-    {
-        name: TOOL_NAMES.VIDEO_ANALYZE,
-        description: `Analyze videos with Gemini multimodal understanding.
-
-Supported video inputs:
-- Local file paths (uploaded via Gemini Files API, with processing polling)
-- Base64 data URI videos (data:video/*;base64,...)
-- YouTube URLs (direct fileData URI)
-
-Best for:
-- Scene and timeline understanding
-- User behavior analysis in recordings
-- UI flow and demo walkthrough analysis
-- Event extraction and structured summaries`,
-        inputSchema: {
-            type: 'object',
-            properties: {
-                prompt: {
+                contextFilePath: {
                     type: 'string',
-                    description: 'Question or instruction about the videos'
+                    description: 'Optional single file path to ground the brainstorm.'
                 },
-                videos: {
+                contextFiles: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'Videos as local file paths, Base64 data URIs (data:video/*;base64,...), or YouTube URLs.'
+                    description: 'Optional multiple context files to ground the brainstorm.'
+                },
+                constraints: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Optional hard constraints the ideas must respect.'
+                },
+                count: {
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 8,
+                    default: 4,
+                    description: 'Number of candidate directions to generate.'
+                },
+                mode: {
+                    type: 'string',
+                    enum: ['explore', 'refine', 'ship'],
+                    default: 'explore',
+                    description: 'explore = maximize option diversity; refine = compare strongest options; ship = bias toward execution-ready ideas.'
+                },
+                model: FLASH_DEFAULT_MODEL_PARAMETER
+            },
+            required: ['topic']
+        }
+    },
+    {
+        name: TOOL_NAMES.ACCEPTANCE_ASSIST,
+        description: 'Acceptance and review copilot for Codex. Evaluates files or codebases against explicit acceptance criteria and returns blocking findings, coverage gaps, and a verdict.',
+        inputSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                acceptanceCriteria: {
+                    type: 'string',
+                    description: 'What done means. Include required behavior, constraints, or review ask.'
                 },
                 context: {
                     type: 'string',
-                    description: 'Optional: Additional context for better understanding'
+                    description: 'Optional extra scope or rationale for the review.'
                 },
-                outputFormat: {
-                    type: 'string',
-                    enum: ['text', 'json', 'markdown'],
-                    description: 'Desired output format (default: text)',
-                    default: 'text'
-                },
-                thinkingLevel: {
-                    type: 'string',
-                    enum: ['low', 'high'],
-                    description: 'Thinking depth: low for speed, high for complex video reasoning (default: high)',
-                    default: 'high'
-                },
-                mediaResolution: {
-                    type: 'string',
-                    enum: [
-                        'MEDIA_RESOLUTION_UNSPECIFIED',
-                        'MEDIA_RESOLUTION_LOW',
-                        'MEDIA_RESOLUTION_MEDIUM',
-                        'MEDIA_RESOLUTION_HIGH'
-                    ],
-                    description: 'Optional media resolution hint for video understanding (Gemini API).'
-                },
-                fps: {
-                    type: 'number',
-                    description: 'Optional video sampling fps in (0, 24], e.g. 1 or 2'
-                },
-                startOffset: {
-                    type: 'string',
-                    description: 'Optional start offset in Duration format, e.g. "10s" or "10.5s"'
-                },
-                endOffset: {
-                    type: 'string',
-                    description: 'Optional end offset in Duration format, e.g. "45s" or "45.25s"'
-                },
-                pollIntervalMs: {
-                    type: 'number',
-                    description: 'Polling interval (ms) when waiting local uploaded videos to become ACTIVE (default: 5000)'
-                },
-                maxPollAttempts: {
-                    type: 'number',
-                    description: 'Maximum polling attempts for local video processing (default: 60)'
-                },
-                deleteUploadedFiles: {
-                    type: 'boolean',
-                    description: 'Whether to delete uploaded local video files from Gemini Files API after request (default: false)'
-                },
-                model: MODEL_PARAMETER
-            },
-            required: ['prompt', 'videos']
-        }
-    },
-    // 📄 Tool 3: gemini_analyze_content
-    {
-        name: TOOL_NAMES.ANALYZE_CONTENT,
-        description: `Analyze code, documents, or data. Supports file path or direct content input. Provides summarization, code review, explanation, optimization, and debugging. Auto-detects content type and programming language.
-
-TIP: This tool supports PARALLEL calls - analyze multiple files simultaneously for faster results.`,
-        inputSchema: {
-            type: 'object',
-            properties: {
-                // Method 1: Direct content input (backward compatible)
-                content: {
-                    type: 'string',
-                    description: 'Content to analyze (direct input). Use this or filePath.'
-                },
-                // Method 2: File path input
                 filePath: {
                     type: 'string',
-                    description: 'File path to read and analyze (e.g., "./src/utils/parser.ts"). The tool will automatically read the file and detect the language. Use this or content.'
+                    description: 'Single file path to inspect.'
                 },
-                type: {
+                content: {
                     type: 'string',
-                    enum: ['code', 'document', 'data', 'auto'],
-                    description: 'Content type (default: auto)',
-                    default: 'auto'
+                    description: 'Inline content to inspect instead of reading from disk.'
                 },
-                task: {
-                    type: 'string',
-                    enum: ['summarize', 'review', 'explain', 'optimize', 'debug'],
-                    description: 'Analysis task (default: summarize)',
-                    default: 'summarize'
-                },
-                language: {
-                    type: 'string',
-                    description: 'Optional: Programming language (if code). Auto-detected when using filePath.'
-                },
-                focus: {
-                    type: 'array',
-                    items: { type: 'string' },
-                    description: 'Optional: Specific areas to focus on (e.g., ["security", "performance"])'
-                },
-                outputFormat: {
-                    type: 'string',
-                    enum: ['text', 'json', 'markdown'],
-                    description: 'Output format (default: markdown)',
-                    default: 'markdown'
-                },
-                model: MODEL_PARAMETER
-            },
-            required: [] // Either content or filePath is required
-        }
-    },
-    // 📦 Tool 4: gemini_analyze_codebase
-    {
-        name: TOOL_NAMES.ANALYZE_CODEBASE,
-        description: 'Analyze entire codebase using 1M token context. Supports directory path, file paths, or file contents. Provides architecture overview, identifies patterns, security issues, performance bottlenecks, and dependency problems.',
-        inputSchema: {
-            type: 'object',
-            properties: {
-                // Method 1: Directory path
                 directory: {
                     type: 'string',
-                    description: 'Directory path to analyze (e.g., "./src" or "C:/Project/src"). The tool will automatically read files from this directory.'
+                    description: 'Directory path for codebase-level acceptance review.'
                 },
-                include: {
-                    type: 'array',
-                    items: { type: 'string' },
-                    description: 'Glob patterns to include files (e.g., ["**/*.ts", "**/*.tsx"]). Only used with directory parameter.'
-                },
-                exclude: {
-                    type: 'array',
-                    items: { type: 'string' },
-                    description: 'Glob patterns to exclude files (e.g., ["node_modules/**", "**/*.test.ts"]). Only used with directory parameter.'
-                },
-                // Method 2: File path list
                 filePaths: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'List of file paths to analyze (e.g., ["./src/index.ts", "./src/utils/helper.ts"]). The tool will automatically read these files.'
+                    description: 'Specific files to inspect together.'
                 },
-                // Method 3: File content array (backward compatible)
                 files: {
                     type: 'array',
                     items: {
                         type: 'object',
+                        additionalProperties: false,
                         properties: {
                             path: { type: 'string' },
                             content: { type: 'string' }
                         },
                         required: ['path', 'content']
                     },
-                    description: 'List of files with their content (for backward compatibility). Use directory or filePaths for easier usage.'
+                    description: 'Inline file set to inspect.'
                 },
-                focus: {
-                    type: 'string',
-                    enum: ['architecture', 'security', 'performance', 'dependencies', 'patterns'],
-                    description: 'Optional: Analysis focus area'
-                },
-                deepThink: {
-                    type: 'boolean',
-                    description: 'Enable Deep Think mode for complex analysis (default: false)',
-                    default: false
-                },
-                thinkingLevel: {
-                    type: 'string',
-                    enum: ['low', 'high'],
-                    description: 'Thinking depth: low for speed, high for complex analysis (default: high)',
-                    default: 'high'
-                },
-                outputFormat: {
-                    type: 'string',
-                    enum: ['markdown', 'json'],
-                    description: 'Output format (default: markdown)',
-                    default: 'markdown'
-                },
-                model: MODEL_PARAMETER
-            },
-            required: [] // One of the three input methods is required
-        }
-    },
-    // 💡 Tool 5: gemini_brainstorm
-    {
-        name: TOOL_NAMES.BRAINSTORM,
-        description: 'Generate creative ideas and solutions. Provides multiple ideas with pros/cons and feasibility assessment. Supports reading project context files to generate ideas that fit your project.',
-        inputSchema: {
-            type: 'object',
-            properties: {
-                topic: {
-                    type: 'string',
-                    description: 'Topic for brainstorming'
-                },
-                context: {
-                    type: 'string',
-                    description: 'Optional: Additional context'
-                },
-                // Project context file path
-                contextFilePath: {
-                    type: 'string',
-                    description: 'Path to project context file (e.g., README.md, PRD.md). Ideas will be tailored to fit the project.'
-                },
-                // Multiple context files
-                contextFiles: {
+                include: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'Paths to multiple context files (e.g., ["./README.md", "./docs/architecture.md"])'
+                    description: 'Glob patterns to include when directory is used.'
                 },
-                count: {
-                    type: 'number',
-                    description: 'Number of ideas to generate (default: 5)',
-                    default: 5
+                exclude: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Glob patterns to exclude when directory is used.'
                 },
-                style: {
+                focus: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                        enum: ['correctness', 'behavior', 'security', 'performance', 'tests', 'maintainability']
+                    },
+                    description: 'Optional review lenses to emphasize.'
+                },
+                strictness: {
                     type: 'string',
-                    enum: ['innovative', 'practical', 'radical'],
-                    description: 'Optional: Brainstorming style'
+                    enum: ['standard', 'strict'],
+                    default: 'standard',
+                    description: 'strict treats missing evidence or missing tests as findings more aggressively.'
                 },
-                model: MODEL_PARAMETER
+                model: PRO_DEFAULT_MODEL_PARAMETER
             },
-            required: ['topic']
-        }
-    },
-    // 🔍 Tool 6: gemini_search
-    {
-        name: TOOL_NAMES.SEARCH,
-        description: `Search the web using Gemini's built-in Google Search grounding.
-
-Features:
-- Returns up-to-date information with source citations
-- Supports thinkingLevel for reasoning depth control
-- Ideal for: current events, latest documentation, real-time data, fact-checking
-
-Usage Tips:
-- Use thinkingLevel: 'low' for simple queries (faster response)
-- Use thinkingLevel: 'high' for complex analysis (deeper reasoning)
-- Use outputFormat: 'json' when you need structured data
-- Search results include source URLs in groundingMetadata
-- PARALLEL CALLS SUPPORTED: Search multiple queries simultaneously for faster results`,
-        inputSchema: {
-            type: 'object',
-            properties: {
-                query: {
-                    type: 'string',
-                    description: 'Search query or question to answer using web search'
-                },
-                context: {
-                    type: 'string',
-                    description: 'Optional: Additional context to help refine the search'
-                },
-                thinkingLevel: {
-                    type: 'string',
-                    enum: ['low', 'high'],
-                    description: 'Thinking depth: low for speed, high for complex analysis (default: high)',
-                    default: 'high'
-                },
-                outputFormat: {
-                    type: 'string',
-                    enum: ['text', 'json'],
-                    description: 'Output format: text for readable response, json for structured data (default: text)',
-                    default: 'text'
-                },
-                model: SEARCH_MODEL_PARAMETER
-            },
-            required: ['query']
+            required: ['acceptanceCriteria'],
+            oneOf: [
+                { required: ['filePath'] },
+                { required: ['content'] },
+                { required: ['directory'] },
+                { required: ['filePaths'] },
+                { required: ['files'] }
+            ]
         }
     }
 ];

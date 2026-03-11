@@ -7,9 +7,8 @@ export const MCP_VERSION = '2024-11-05';
 export const SERVER_INFO = {
     name: 'mcp-server-gemini',
     version: '1.2.4',
-    description: `Gemini AI MCP Server with 6 core tools.
-IMPORTANT: All tools support PARALLEL execution - call multiple tools simultaneously for better performance.
-Example: analyze multiple files or search multiple queries in parallel.`,
+    description: `Gemini AI MCP Server with 2 Codex-oriented assistant tools.
+Focus on high-signal brainstorming and acceptance review with Gemini.`,
     author: 'LKbaba',
     basedOn: 'aliargun/mcp-server-gemini v4.2.2'
 };
@@ -20,14 +19,10 @@ export const API_CONFIG = {
     retryDelay: 1000, // 1 second
     maxImageSize: 10 * 1024 * 1024, // 10MB
 };
-// Tool names - v1.2.5: expanded to 6 core tools
+// Tool names - streamlined public surface for Codex-oriented assistants
 export const TOOL_NAMES = {
-    MULTIMODAL_QUERY: 'gemini_multimodal_query',
-    VIDEO_ANALYZE: 'gemini_video_analyze',
-    ANALYZE_CONTENT: 'gemini_analyze_content',
-    ANALYZE_CODEBASE: 'gemini_analyze_codebase',
-    BRAINSTORM: 'gemini_brainstorm',
-    SEARCH: 'gemini_search'
+    BRAINSTORM_ASSIST: 'gemini_brainstorm_assist',
+    ACCEPTANCE_ASSIST: 'gemini_acceptance_assist'
 };
 // Error codes
 export const ERROR_CODES = {
@@ -63,6 +58,19 @@ export const ANALYSIS_TASKS = ['summarize', 'review', 'explain', 'optimize', 'de
 export const CODEBASE_FOCUS = ['architecture', 'security', 'performance', 'dependencies', 'patterns'];
 // Brainstorm styles
 export const BRAINSTORM_STYLES = ['innovative', 'practical', 'radical'];
+// Brainstorm assistant modes
+export const BRAINSTORM_MODES = ['explore', 'refine', 'ship'];
+// Acceptance assistant focus areas
+export const ACCEPTANCE_FOCUS = [
+    'correctness',
+    'behavior',
+    'security',
+    'performance',
+    'tests',
+    'maintainability'
+];
+// Acceptance assistant strictness
+export const ACCEPTANCE_STRICTNESS = ['standard', 'strict'];
 // Feasibility levels
 export const FEASIBILITY_LEVELS = ['low', 'medium', 'high'];
 // Severity levels

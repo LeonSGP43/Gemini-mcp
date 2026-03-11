@@ -53,6 +53,13 @@ export interface ModelConfig {
   pricing?: ModelPricing;
 }
 
+export const PUBLIC_TOOL_MODELS = [
+  'gemini-3.1-pro-preview',
+  'gemini-3-flash-preview'
+] as const;
+
+export type PublicToolModel = typeof PUBLIC_TOOL_MODELS[number];
+
 /**
  * Supported Gemini model list
  * Curated 3 models focused on UI generation and frontend development

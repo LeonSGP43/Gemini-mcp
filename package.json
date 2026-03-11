@@ -1,7 +1,7 @@
 {
   "name": "@lkbaba/mcp-server-gemini",
   "version": "1.2.4",
-  "description": "Specialized MCP server for Gemini 3.0 Pro focused on UI generation and frontend development",
+  "description": "Gemini MCP server with Codex-oriented brainstorming and acceptance assistants",
   "main": "dist/server.js",
   "bin": {
     "mcp-server-gemini": "./dist/server.js"

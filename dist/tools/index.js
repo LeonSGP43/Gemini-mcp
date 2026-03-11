@@ -2,9 +2,12 @@
  * Tool Exports
  * Unified entry point for all MCP tools
  *
- * v1.2.5 Update: Expanded to 6 core tools
+ * Public MCP surface is intentionally small.
  */
-// Export tool handlers
+// Public tool handlers
+export { handleBrainstormAssist } from './brainstorm-assist.js';
+export { handleAcceptanceAssist } from './acceptance-assist.js';
+// Internal or legacy handlers
 export { handleMultimodalQuery } from './multimodal-query.js';
 export { handleVideoAnalyze } from './video-analyze.js';
 export { handleAnalyzeContent } from './analyze-content.js';

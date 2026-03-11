@@ -1,181 +1,44 @@
 # Gemini MCP Server
 
-> **Give Claude Code the power of Gemini 3.0**
+> Gemini assistants for Codex: one tool to brainstorm, one tool to accept or reject work.
 
-An MCP server that connects Claude Code to Google's Gemini 3.0, unlocking capabilities that complement Claude's strengths.
+This server intentionally exposes a small MCP surface:
 
-## Why Gemini + Claude?
+- `gemini_brainstorm_assist`
+- `gemini_acceptance_assist`
 
-| Gemini's Strengths | Use Case |
-|-------------------|----------|
-| **1M Token Context** | Analyze entire codebases in one shot |
-| **Google Search Grounding** | Get real-time documentation & latest info |
-| **Multimodal Vision** | Understand screenshots, diagrams, designs |
+The goal is not to mirror every Gemini capability. The goal is to feel native inside Codex: low-ceremony inputs, strong defaults, and structured outputs that are easy for an agent to use reliably.
 
-> **Philosophy**: Claude is the commander, Gemini is the specialist.
+## Why This Shape
+
+- Fewer tools means more predictable tool selection.
+- `gemini_brainstorm_assist` is optimized for ideation, tradeoffs, and next steps.
+- `gemini_acceptance_assist` is optimized for review, blocking findings, coverage gaps, and pass/fail style judgment.
+- Legacy multimodal, search, and generic analysis handlers can remain in the codebase as implementation building blocks, but they are not part of the public MCP contract.
+
+## Public Tools
+
+| Tool | Purpose | Default Model |
+|------|---------|---------------|
+| `gemini_brainstorm_assist` | Generate concrete options, tradeoffs, and recommended direction from a topic plus optional repo context. | `gemini-3-flash-preview` |
+| `gemini_acceptance_assist` | Evaluate a file or codebase against explicit acceptance criteria and return structured findings. | `gemini-3.1-pro-preview` |
 
 ## Quick Start
 
-### 1. Get API Key
+### 1. Get an API key
 
-Visit [Google AI Studio](https://aistudio.google.com/apikey) and create an API key.
+Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/apikey).
 
-### 2. Configure Claude Code
-
-Add to your MCP config file:
-
-- **Mac**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-- **Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "gemini": {
-      "command": "npx",
-      "args": ["-y", "@lkbaba/mcp-server-gemini"],
-      "env": {
-        "GEMINI_API_KEY": "your_api_key_here"
-      }
-    }
-  }
-}
-```
-
-### 3. Restart Claude Code
-
-## Tools (6)
-
-### Research & Search
-| Tool | Description |
-|------|-------------|
-| `gemini_search` | Web search with Google Search grounding. Get real-time info, latest docs, current events. |
-
-### Analysis (1M Token Context)
-| Tool | Description |
-|------|-------------|
-| `gemini_analyze_codebase` | Analyze entire projects with 1M token context. Supports directory path, file paths, or direct content. |
-| `gemini_analyze_content` | Analyze code, documents, or data. Supports file path or direct content input. |
-
-### Multimodal
-| Tool | Description |
-|------|-------------|
-| `gemini_multimodal_query` | Analyze images with natural language. Understand designs, diagrams, screenshots. |
-| `gemini_video_analyze` | Analyze videos with temporal understanding. Supports local file path, Base64 video, and YouTube URL. |
-
-### Creative
-| Tool | Description |
-|------|-------------|
-| `gemini_brainstorm` | Generate creative ideas with project context. Supports reading README, PRD files. |
-
-## Model Selection (v1.2.0)
-
-All tools now support an optional `model` parameter:
-
-| Model | Speed | Best For |
-|-------|-------|----------|
-| `gemini-3.1-pro-preview` | Standard | Complex analysis, deep reasoning (default) |
-| `gemini-3-flash-preview` | Fast | Simple tasks, quick responses |
-
-**Example: Use Flash for faster response**
-```json
-{
-  "name": "gemini_analyze_content",
-  "arguments": {
-    "filePath": "./src/index.ts",
-    "task": "review",
-    "model": "gemini-3-flash-preview"
-  }
-}
-```
-
-## Usage Examples
-
-### Analyze a Large Codebase
-```
-"Use Gemini to analyze the ./src directory for architectural patterns and potential issues"
-```
-
-### Search for Latest Documentation
-```
-"Search for the latest Next.js 15 App Router documentation"
-```
-
-### Analyze an Image
-```
-"Analyze this architecture diagram and explain the data flow" (attach image)
-```
-
-### Analyze a Video
-```
-"Analyze this product demo video and list key user actions by timeline"
-```
-
-### Video Tool Example (JSON)
-```json
-{
-  "name": "gemini_video_analyze",
-  "arguments": {
-    "prompt": "Summarize this demo video and extract key actions with timestamps",
-    "videos": ["./assets/demo.mp4"],
-    "outputFormat": "markdown",
-    "model": "gemini-3.1-pro-preview",
-    "thinkingLevel": "high",
-    "mediaResolution": "MEDIA_RESOLUTION_MEDIUM",
-    "fps": 1,
-    "startOffset": "0s",
-    "endOffset": "90s",
-    "deleteUploadedFiles": true
-  }
-}
-```
-
-### Brainstorm with Context
-```
-"Brainstorm feature ideas based on this project's README.md"
-```
-
-## Proxy Configuration
-
-<details>
-<summary>For users behind proxy/VPN</summary>
-
-Add proxy environment variable to your config:
-
-```json
-{
-  "mcpServers": {
-    "gemini": {
-      "command": "npx",
-      "args": ["-y", "@lkbaba/mcp-server-gemini"],
-      "env": {
-        "GEMINI_API_KEY": "your_api_key_here",
-        "HTTPS_PROXY": "http://127.0.0.1:7897"
-      }
-    }
-  }
-}
-```
-</details>
-
-## Local Development
-
-<details>
-<summary>Build from source</summary>
+### 2. Install and build locally
 
 ```bash
 git clone https://github.com/LKbaba/Gemini-mcp.git
 cd Gemini-mcp
 npm install
 npm run build
-export GEMINI_API_KEY="your_api_key_here"
-npm start
 ```
-</details>
 
-## Codex MCP 配置
-
-如果你希望在 Codex CLI 中直接使用这个 MCP server，可在 Codex 的 MCP 配置里添加一个 `stdio` 服务（下面是推荐本地源码方式）：
+### 3. Configure Codex
 
 ```json
 {
@@ -191,55 +54,136 @@ npm start
 }
 ```
 
-如果你希望直接用 npm 包运行：
+If you need a proxy, add `HTTP_PROXY` / `HTTPS_PROXY` in the same `env` block.
+
+## Tool Contracts
+
+### `gemini_brainstorm_assist`
+
+Use this when Codex needs ideas that are concrete enough to act on.
+
+Core inputs:
+
+- `topic` required
+- `goal` optional
+- `context` optional
+- `contextFilePath` or `contextFiles` optional
+- `constraints` optional
+- `count` optional, default `4`
+- `mode` optional: `explore` | `refine` | `ship`
+- `model` optional: `gemini-3.1-pro-preview` | `gemini-3-flash-preview`
+
+Typical result shape:
 
 ```json
 {
-  "mcpServers": {
-    "gemini": {
-      "command": "npx",
-      "args": ["-y", "@lkbaba/mcp-server-gemini"],
-      "env": {
-        "GEMINI_API_KEY": "your_api_key_here"
-      }
+  "topic": "How should we restructure the MCP surface?",
+  "mode": "ship",
+  "summary": "Two assistants are enough; generic tools add ambiguity.",
+  "recommendedDirection": "Expose two Codex-facing tools and keep lower-level handlers internal.",
+  "ideas": [
+    {
+      "title": "Public dual-tool contract",
+      "rationale": "Reduces tool-selection ambiguity for Codex.",
+      "benefits": ["predictable routing"],
+      "risks": ["less direct access to raw primitives"],
+      "implementationOutline": ["add new definitions", "reroute server", "rewrite docs"]
     }
+  ],
+  "nextSteps": ["implement the new tool definitions"]
+}
+```
+
+Example:
+
+```json
+{
+  "name": "gemini_brainstorm_assist",
+  "arguments": {
+    "topic": "How should we make this MCP feel native in Codex?",
+    "goal": "Choose the simplest high-signal public contract",
+    "contextFilePath": "./README.md",
+    "constraints": ["Keep latency low", "Prefer two public tools max"],
+    "mode": "ship"
   }
 }
 ```
 
-注意：
-- 本项目现在支持 `Content-Length` 分帧与按行 JSON 两种 stdio 传输方式，适配主流 MCP host（包括 Codex）。
-- 首次本地运行前请先执行：`npm install && npm run build`。
+### `gemini_acceptance_assist`
 
-## Project Structure
+Use this when Codex needs a review-style judgment against explicit criteria.
 
+Core inputs:
+
+- `acceptanceCriteria` required
+- Exactly one input source:
+  - `filePath`
+  - `content`
+  - `directory`
+  - `filePaths`
+  - `files`
+- `context` optional
+- `include` / `exclude` optional for `directory`
+- `focus` optional:
+  `correctness`, `behavior`, `security`, `performance`, `tests`, `maintainability`
+- `strictness` optional: `standard` | `strict`
+- `model` optional: `gemini-3.1-pro-preview` | `gemini-3-flash-preview`
+
+Typical result shape:
+
+```json
+{
+  "verdict": "needs_work",
+  "summary": "The public contract is moving in the right direction but the docs still expose removed tools.",
+  "blockingFindings": [
+    {
+      "title": "README drift",
+      "severity": "high",
+      "description": "The README still documents removed public tools.",
+      "location": "README.md",
+      "suggestion": "Rewrite the public docs to match the new two-tool contract."
+    }
+  ],
+  "nonBlockingFindings": [],
+  "coverageGaps": [],
+  "recommendedNextSteps": ["rewrite docs", "run build", "smoke-test tools/list"]
+}
 ```
-src/
-├── config/
-│   ├── models.ts           # Model configurations
-│   └── constants.ts        # Global constants
-├── tools/
-│   ├── definitions.ts      # MCP tool definitions
-│   ├── multimodal-query.ts # Multimodal queries
-│   ├── video-analyze.ts    # Video analysis
-│   ├── analyze-content.ts  # Content analysis
-│   ├── analyze-codebase.ts # Codebase analysis
-│   ├── brainstorm.ts       # Brainstorming
-│   └── search.ts           # Web search
-├── utils/
-│   ├── gemini-client.ts    # Gemini API client
-│   ├── file-reader.ts      # File system access
-│   ├── security.ts         # Path validation
-│   ├── validators.ts       # Parameter validation
-│   └── error-handler.ts    # Error handling
-├── types.ts                # Type definitions
-└── server.ts               # Main server
+
+Example:
+
+```json
+{
+  "name": "gemini_acceptance_assist",
+  "arguments": {
+    "acceptanceCriteria": "Review whether the public MCP contract is limited to two Codex-oriented tools and whether the docs match runtime behavior.",
+    "directory": "./src",
+    "focus": ["correctness", "maintainability"],
+    "strictness": "strict"
+  }
+}
 ```
 
-## Credits
+## Models
 
-Based on [aliargun/mcp-server-gemini](https://github.com/aliargun/mcp-server-gemini)
+The public tool layer intentionally exposes only two models:
 
-## License
+- `gemini-3.1-pro-preview`
+- `gemini-3-flash-preview`
 
-MIT
+Recommended defaults:
+
+- Brainstorming: Flash
+- Acceptance review: Pro
+
+## Development
+
+```bash
+npm run build
+npm start
+```
+
+## Notes
+
+- Public MCP scope is intentionally small.
+- If you want to add more Gemini capabilities later, prefer implementing them as internal helpers first and exposing them only when they clearly improve Codex ergonomics.

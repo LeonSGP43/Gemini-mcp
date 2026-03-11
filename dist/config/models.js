@@ -3,6 +3,10 @@
  * Based on official documentation: https://ai.google.dev/gemini-api/docs/models
  * Last updated: January 2026
  */
+export const PUBLIC_TOOL_MODELS = [
+    'gemini-3.1-pro-preview',
+    'gemini-3-flash-preview'
+];
 /**
  * Supported Gemini model list
  * Curated 3 models focused on UI generation and frontend development
