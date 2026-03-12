@@ -11,8 +11,8 @@
     "prepare": "npm run build",
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "test:watch": "npm run build && node --test --watch tests/*.test.mjs",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts"
   },
@@ -58,7 +58,7 @@
   },
   "homepage": "https://github.com/LKbaba/Gemini-mcp#readme",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=20.18.1"
   },
   "files": [
     "dist",

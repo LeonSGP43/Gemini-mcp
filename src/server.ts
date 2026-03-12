@@ -10,8 +10,15 @@
 
 import { MCPRequest, MCPResponse, InitializeResult } from './types.js';
 import { SERVER_INFO, MCP_VERSION, ERROR_CODES, TOOL_NAMES } from './config/constants.js';
-import { handleAPIError, handleValidationError, handleInternalError, logError } from './utils/error-handler.js';
+import {
+  handleAPIError,
+  handleValidationError,
+  handleInternalError,
+  logError,
+  sanitizeUrlForLog
+} from './utils/error-handler.js';
 import { TOOL_DEFINITIONS } from './tools/definitions.js';
+import { SimpleSchema, validateValueAgainstSchema } from './utils/schema-validator.js';
 import {
   handleBrainstormAssist,
   handleAcceptanceAssist
@@ -26,7 +33,7 @@ async function setupProxy(): Promise<void> {
       const { ProxyAgent, setGlobalDispatcher } = await import('undici');
       const dispatcher = new ProxyAgent(proxyUrl);
       setGlobalDispatcher(dispatcher);
-      console.error(`🌐 Proxy configured: ${proxyUrl}`);
+      console.error(`🌐 Proxy configured: ${sanitizeUrlForLog(proxyUrl)}`);
     } catch (error) {
       console.error('⚠️  Failed to configure proxy. If you need proxy support, run: npm install undici');
     }
@@ -50,6 +57,9 @@ let transportMode: 'unknown' | 'line' | 'framed' = 'unknown';
 
 const FRAME_HEADER_SEPARATOR = Buffer.from('\r\n\r\n');
 const FRAME_HEADER_SEPARATOR_LF = Buffer.from('\n\n');
+const TOOL_DEFINITION_MAP = new Map<string, (typeof TOOL_DEFINITIONS)[number]>(
+  TOOL_DEFINITIONS.map(definition => [definition.name, definition])
+);
 
 type RequestId = string | number | null | undefined;
 
@@ -144,7 +154,26 @@ async function handleToolsCall(request: MCPRequest): Promise<void> {
     return;
   }
 
-  const { name, arguments: args } = request.params;
+  if (!request.params || typeof request.params !== 'object' || Array.isArray(request.params)) {
+    const validationError = handleValidationError('tools/call params must be an object');
+    sendError(request.id, validationError.code, validationError.message, validationError.data);
+    return;
+  }
+
+  const name = (request.params as Record<string, unknown>).name;
+  const args = (request.params as Record<string, unknown>).arguments;
+
+  if (typeof name !== 'string' || !name) {
+    const validationError = handleValidationError('tools/call params.name is required and must be a string');
+    sendError(request.id, validationError.code, validationError.message, validationError.data);
+    return;
+  }
+
+  if (args !== undefined && (typeof args !== 'object' || args === null || Array.isArray(args))) {
+    const validationError = handleValidationError('tools/call params.arguments must be an object');
+    sendError(request.id, validationError.code, validationError.message, validationError.data);
+    return;
+  }
 
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -158,15 +187,26 @@ async function handleToolsCall(request: MCPRequest): Promise<void> {
     }
 
     let result: any;
+    const toolDefinition = TOOL_DEFINITION_MAP.get(name);
+
+    if (toolDefinition) {
+      try {
+        validateValueAgainstSchema(args ?? {}, toolDefinition.inputSchema as SimpleSchema, 'arguments');
+      } catch (error: any) {
+        const validationError = handleValidationError(error.message);
+        sendError(request.id, validationError.code, validationError.message, validationError.data);
+        return;
+      }
+    }
 
     // Route to corresponding tool handler
     switch (name) {
       case TOOL_NAMES.BRAINSTORM_ASSIST:
-        result = await handleBrainstormAssist(args, apiKey);
+        result = await handleBrainstormAssist((args ?? {}) as any, apiKey);
         break;
 
       case TOOL_NAMES.ACCEPTANCE_ASSIST:
-        result = await handleAcceptanceAssist(args, apiKey);
+        result = await handleAcceptanceAssist((args ?? {}) as any, apiKey);
         break;
 
       default:
@@ -192,6 +232,11 @@ async function handleToolsCall(request: MCPRequest): Promise<void> {
       }
     });
   } catch (error: any) {
+    if (typeof error?.code === 'number' && typeof error?.message === 'string') {
+      sendError(request.id, error.code, error.message, error.data);
+      return;
+    }
+
     logError(`Tool: ${name}`, error);
 
     // Return appropriate error based on error type
@@ -375,8 +420,25 @@ async function processRawMessage(raw: Buffer | string): Promise<void> {
  */
 async function handleRequest(request: MCPRequest): Promise<void> {
   try {
+    if (!request || typeof request !== 'object' || Array.isArray(request)) {
+      throw handleValidationError('Request must be a JSON object');
+    }
+
+    if (request.jsonrpc !== '2.0') {
+      throw handleValidationError('jsonrpc must be "2.0"');
+    }
+
+    if (typeof request.method !== 'string' || request.method.length === 0) {
+      throw handleValidationError('method is required and must be a string');
+    }
+
     switch (request.method) {
       case 'initialize':
+        if (!request.params || typeof request.params !== 'object' || Array.isArray(request.params)) {
+          const validationError = handleValidationError('initialize params must be an object');
+          sendError(request.id, validationError.code, validationError.message, validationError.data);
+          return;
+        }
         handleInitialize(request);
         break;
 
@@ -420,6 +482,11 @@ async function handleRequest(request: MCPRequest): Promise<void> {
         );
     }
   } catch (error: any) {
+    if (typeof error?.code === 'number' && typeof error?.message === 'string') {
+      sendError(request.id, error.code, error.message, error.data);
+      return;
+    }
+
     logError('Request handler', error);
     const internalError = handleInternalError(error);
     sendError(request.id, internalError.code, internalError.message, internalError.data);

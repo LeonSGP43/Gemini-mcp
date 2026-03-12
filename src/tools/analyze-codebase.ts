@@ -337,7 +337,7 @@ export async function handleAnalyzeCodebase(
 
     if (hasDirectory) {
       // Method 1: Read files from directory
-      console.log(`[analyze_codebase] Reading directory: ${params.directory}`);
+      console.error(`[analyze_codebase] Reading directory: ${params.directory}`);
 
       try {
         const fileContents = await readDirectory(params.directory!, {
@@ -354,7 +354,7 @@ export async function handleAnalyzeCodebase(
         }
 
         filesToAnalyze = convertFileContents(fileContents);
-        console.log(`[analyze_codebase] Successfully read ${filesToAnalyze.length} files`);
+        console.error(`[analyze_codebase] Successfully read ${filesToAnalyze.length} files`);
 
       } catch (error) {
         // Handle security errors
@@ -366,7 +366,7 @@ export async function handleAnalyzeCodebase(
 
     } else if (hasFilePaths) {
       // Method 2: Read from file path list
-      console.log(`[analyze_codebase] Reading ${params.filePaths!.length} files`);
+      console.error(`[analyze_codebase] Reading ${params.filePaths!.length} files`);
 
       try {
         const fileContents = await readFiles(params.filePaths!);
@@ -376,7 +376,7 @@ export async function handleAnalyzeCodebase(
         }
 
         filesToAnalyze = convertFileContents(fileContents);
-        console.log(`[analyze_codebase] Successfully read ${filesToAnalyze.length} files`);
+        console.error(`[analyze_codebase] Successfully read ${filesToAnalyze.length} files`);
 
       } catch (error) {
         if (error instanceof SecurityError) {

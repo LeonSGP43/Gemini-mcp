@@ -213,7 +213,7 @@ export async function handleAnalyzeContent(params, client) {
         let detectedLanguage = params.language;
         if (hasFilePath) {
             // Method 1: Read content from file
-            console.log(`[analyze_content] Reading file: ${params.filePath}`);
+            console.error(`[analyze_content] Reading file: ${params.filePath}`);
             try {
                 const fileContent = await readFile(params.filePath);
                 contentToAnalyze = fileContent.content;
@@ -221,7 +221,7 @@ export async function handleAnalyzeContent(params, client) {
                 if (!detectedLanguage && fileContent.language) {
                     detectedLanguage = fileContent.language;
                 }
-                console.log(`[analyze_content] Successfully read file, size: ${fileContent.size} bytes`);
+                console.error(`[analyze_content] Successfully read file, size: ${fileContent.size} bytes`);
             }
             catch (error) {
                 if (error instanceof SecurityError) {

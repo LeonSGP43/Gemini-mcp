@@ -124,6 +124,9 @@ export function normalizePath(inputPath) {
  * hasPathTraversal('./vendor..lib.js')   // false (legitimate filename)
  */
 export function hasPathTraversal(inputPath, basePath) {
+    if (path.isAbsolute(inputPath)) {
+        return false;
+    }
     // Get base path (defaults to current working directory)
     const base = basePath ? path.resolve(basePath) : process.cwd();
     // Resolve input path to absolute path
@@ -229,6 +232,34 @@ export async function isSymlink(filePath) {
     }
 }
 /**
+ * Check whether any existing path segment is a symbolic link.
+ *
+ * This catches cases like /safe/link/file.txt where "link" is a symlinked directory.
+ */
+export async function hasSymlinkInPath(filePath) {
+    const absolutePath = path.resolve(filePath);
+    const { root } = path.parse(absolutePath);
+    const relativePath = absolutePath.slice(root.length);
+    const segments = relativePath.split(path.sep).filter(Boolean);
+    let currentPath = root || '.';
+    for (const segment of segments) {
+        currentPath = currentPath === path.sep || currentPath === ''
+            ? path.join(currentPath, segment)
+            : path.join(currentPath, segment);
+        try {
+            const stats = await fs.lstat(currentPath);
+            if (stats.isSymbolicLink()) {
+                return true;
+            }
+        }
+        catch {
+            // Stop at the first non-existent path segment. Existing parent segments were already checked.
+            break;
+        }
+    }
+    return false;
+}
+/**
  * Get file size
  *
  * @param filePath File path
@@ -274,8 +305,8 @@ export async function validatePath(inputPath, config) {
     // 4. Check for symbolic link (if file exists)
     if (!mergedConfig.allowSymlinks) {
         try {
-            if (await isSymlink(inputPath)) {
-                throw new SecurityError(`Symlink access denied: "${inputPath}" is a symbolic link`, 'SYMLINK_DETECTED', inputPath);
+            if (await hasSymlinkInPath(inputPath)) {
+                throw new SecurityError(`Symlink access denied: "${inputPath}" contains a symbolic link in its path`, 'SYMLINK_DETECTED', inputPath);
             }
         }
         catch (error) {

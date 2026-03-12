@@ -226,7 +226,7 @@ export async function handleAnalyzeCodebase(params, client) {
         let filesToAnalyze;
         if (hasDirectory) {
             // Method 1: Read files from directory
-            console.log(`[analyze_codebase] Reading directory: ${params.directory}`);
+            console.error(`[analyze_codebase] Reading directory: ${params.directory}`);
             try {
                 const fileContents = await readDirectory(params.directory, {
                     include: params.include,
@@ -238,7 +238,7 @@ export async function handleAnalyzeCodebase(params, client) {
                         (params.exclude ? ` Exclude patterns: ${params.exclude.join(', ')}` : ''));
                 }
                 filesToAnalyze = convertFileContents(fileContents);
-                console.log(`[analyze_codebase] Successfully read ${filesToAnalyze.length} files`);
+                console.error(`[analyze_codebase] Successfully read ${filesToAnalyze.length} files`);
             }
             catch (error) {
                 // Handle security errors
@@ -250,14 +250,14 @@ export async function handleAnalyzeCodebase(params, client) {
         }
         else if (hasFilePaths) {
             // Method 2: Read from file path list
-            console.log(`[analyze_codebase] Reading ${params.filePaths.length} files`);
+            console.error(`[analyze_codebase] Reading ${params.filePaths.length} files`);
             try {
                 const fileContents = await readFiles(params.filePaths);
                 if (fileContents.length === 0) {
                     throw new Error('All specified files could not be read. Please check if file paths are correct.');
                 }
                 filesToAnalyze = convertFileContents(fileContents);
-                console.log(`[analyze_codebase] Successfully read ${filesToAnalyze.length} files`);
+                console.error(`[analyze_codebase] Successfully read ${filesToAnalyze.length} files`);
             }
             catch (error) {
                 if (error instanceof SecurityError) {

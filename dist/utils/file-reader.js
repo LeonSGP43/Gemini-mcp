@@ -364,12 +364,12 @@ export async function readFiles(filePaths, config) {
     }
     // If there are errors, output warning (but don't throw)
     if (errors.length > 0) {
-        console.warn(`[file-reader] Skipped ${errors.length} files:`);
+        console.error(`[file-reader] Skipped ${errors.length} files:`);
         for (const { path, error } of errors.slice(0, 5)) {
-            console.warn(`  - ${path}: ${error}`);
+            console.error(`  - ${path}: ${error}`);
         }
         if (errors.length > 5) {
-            console.warn(`  ... and ${errors.length - 5} other files`);
+            console.error(`  ... and ${errors.length - 5} other files`);
         }
     }
     return results;

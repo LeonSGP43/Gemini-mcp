@@ -8,8 +8,9 @@
  * Author: LKbaba
  */
 import { SERVER_INFO, MCP_VERSION, ERROR_CODES, TOOL_NAMES } from './config/constants.js';
-import { handleAPIError, handleValidationError, handleInternalError, logError } from './utils/error-handler.js';
+import { handleAPIError, handleValidationError, handleInternalError, logError, sanitizeUrlForLog } from './utils/error-handler.js';
 import { TOOL_DEFINITIONS } from './tools/definitions.js';
+import { validateValueAgainstSchema } from './utils/schema-validator.js';
 import { handleBrainstormAssist, handleAcceptanceAssist } from './tools/index.js';
 // Setup proxy for Node.js fetch (required for users behind proxy/VPN)
 async function setupProxy() {
@@ -19,7 +20,7 @@ async function setupProxy() {
             const { ProxyAgent, setGlobalDispatcher } = await import('undici');
             const dispatcher = new ProxyAgent(proxyUrl);
             setGlobalDispatcher(dispatcher);
-            console.error(`🌐 Proxy configured: ${proxyUrl}`);
+            console.error(`🌐 Proxy configured: ${sanitizeUrlForLog(proxyUrl)}`);
         }
         catch (error) {
             console.error('⚠️  Failed to configure proxy. If you need proxy support, run: npm install undici');
@@ -41,6 +42,7 @@ let buffer = Buffer.alloc(0);
 let transportMode = 'unknown';
 const FRAME_HEADER_SEPARATOR = Buffer.from('\r\n\r\n');
 const FRAME_HEADER_SEPARATOR_LF = Buffer.from('\n\n');
+const TOOL_DEFINITION_MAP = new Map(TOOL_DEFINITIONS.map(definition => [definition.name, definition]));
 /**
  * Send response to stdout
  */
@@ -121,7 +123,23 @@ async function handleToolsCall(request) {
         sendError(request.id, ERROR_CODES.INTERNAL_ERROR, 'Server not initialized');
         return;
     }
-    const { name, arguments: args } = request.params;
+    if (!request.params || typeof request.params !== 'object' || Array.isArray(request.params)) {
+        const validationError = handleValidationError('tools/call params must be an object');
+        sendError(request.id, validationError.code, validationError.message, validationError.data);
+        return;
+    }
+    const name = request.params.name;
+    const args = request.params.arguments;
+    if (typeof name !== 'string' || !name) {
+        const validationError = handleValidationError('tools/call params.name is required and must be a string');
+        sendError(request.id, validationError.code, validationError.message, validationError.data);
+        return;
+    }
+    if (args !== undefined && (typeof args !== 'object' || args === null || Array.isArray(args))) {
+        const validationError = handleValidationError('tools/call params.arguments must be an object');
+        sendError(request.id, validationError.code, validationError.message, validationError.data);
+        return;
+    }
     try {
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
@@ -129,13 +147,24 @@ async function handleToolsCall(request) {
             return;
         }
         let result;
+        const toolDefinition = TOOL_DEFINITION_MAP.get(name);
+        if (toolDefinition) {
+            try {
+                validateValueAgainstSchema(args ?? {}, toolDefinition.inputSchema, 'arguments');
+            }
+            catch (error) {
+                const validationError = handleValidationError(error.message);
+                sendError(request.id, validationError.code, validationError.message, validationError.data);
+                return;
+            }
+        }
         // Route to corresponding tool handler
         switch (name) {
             case TOOL_NAMES.BRAINSTORM_ASSIST:
-                result = await handleBrainstormAssist(args, apiKey);
+                result = await handleBrainstormAssist((args ?? {}), apiKey);
                 break;
             case TOOL_NAMES.ACCEPTANCE_ASSIST:
-                result = await handleAcceptanceAssist(args, apiKey);
+                result = await handleAcceptanceAssist((args ?? {}), apiKey);
                 break;
             default:
                 sendError(request.id, ERROR_CODES.METHOD_NOT_FOUND, `Unknown tool: ${name}`);
@@ -156,6 +185,10 @@ async function handleToolsCall(request) {
         });
     }
     catch (error) {
+        if (typeof error?.code === 'number' && typeof error?.message === 'string') {
+            sendError(request.id, error.code, error.message, error.data);
+            return;
+        }
         logError(`Tool: ${name}`, error);
         // Return appropriate error based on error type
         if (error.message?.includes('not yet implemented')) {
@@ -307,8 +340,22 @@ async function processRawMessage(raw) {
  */
 async function handleRequest(request) {
     try {
+        if (!request || typeof request !== 'object' || Array.isArray(request)) {
+            throw handleValidationError('Request must be a JSON object');
+        }
+        if (request.jsonrpc !== '2.0') {
+            throw handleValidationError('jsonrpc must be "2.0"');
+        }
+        if (typeof request.method !== 'string' || request.method.length === 0) {
+            throw handleValidationError('method is required and must be a string');
+        }
         switch (request.method) {
             case 'initialize':
+                if (!request.params || typeof request.params !== 'object' || Array.isArray(request.params)) {
+                    const validationError = handleValidationError('initialize params must be an object');
+                    sendError(request.id, validationError.code, validationError.message, validationError.data);
+                    return;
+                }
                 handleInitialize(request);
                 break;
             case 'notifications/initialized':
@@ -341,6 +388,10 @@ async function handleRequest(request) {
         }
     }
     catch (error) {
+        if (typeof error?.code === 'number' && typeof error?.message === 'string') {
+            sendError(request.id, error.code, error.message, error.data);
+            return;
+        }
         logError('Request handler', error);
         const internalError = handleInternalError(error);
         sendError(request.id, internalError.code, internalError.message, internalError.data);
